@@ -24,8 +24,16 @@ async function sendVatInvoiceEmail(tableId, invoice) {
     const vat = JSON.parse(vatStr);
     if (!vat.email) return;
 
-    const items = typeof invoice.items === "string" ? JSON.parse(invoice.items) : invoice.items;
-    const itemRows = (items || [])
+    let items = invoice.items || [];
+    if (typeof items === "string") {
+      try {
+        items = JSON.parse(items);
+        if (typeof items === "string") items = JSON.parse(items);
+      } catch (e) {}
+    }
+    if (!Array.isArray(items)) items = [];
+
+    const itemRows = items
       .map(
         (it) =>
           `<tr><td style="padding:6px 10px;border-bottom:1px solid #eee">${it.name}</td>

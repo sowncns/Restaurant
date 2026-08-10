@@ -121,7 +121,15 @@ async function settleInvoicePayment(orderCode, paidAmount, isSuccess) {
       if (vatStr) {
         const vat = JSON.parse(vatStr);
         if (vat.email) {
-          const items = typeof invoice.items === "string" ? JSON.parse(invoice.items) : (invoice.items || []);
+          let items = invoice.items || [];
+          if (typeof items === "string") {
+            try {
+              items = JSON.parse(items);
+              if (typeof items === "string") items = JSON.parse(items);
+            } catch (e) {}
+          }
+          if (!Array.isArray(items)) items = [];
+          
           const m = (n) => Number(n).toLocaleString("vi-VN");
           const rows = items.map((it) =>
             `<tr><td style="padding:6px 10px;border-bottom:1px solid #eee">${it.name}</td>

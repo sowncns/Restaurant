@@ -376,32 +376,6 @@ export default function OrdersPage() {
               </span>
             </div>
           )}
-          {table && (
-            <button
-              onClick={() => { setScanToken(''); setScanRes(''); setCameraOn(false); setScanModalOpen(true) }}
-              className={`flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-colors active:scale-95 ${
-                scanResult
-                  ? 'bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-100'
-                  : 'bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100'
-              }`}
-            >
-              <QrCode size={13} />
-              <span>Quét</span>
-            </button>
-          )}
-          {table && (
-            <button
-              onClick={() => setVatModalOpen(true)}
-              className={`flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-colors active:scale-95 ${
-                vatSaved
-                  ? 'bg-green-50 border border-green-300 text-green-700 hover:bg-green-100'
-                  : 'bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100'
-              }`}
-            >
-              <FileText size={13} />
-              <span>VAT</span>
-            </button>
-          )}
           <Button variant="ghost" size="sm" onClick={loadTables} className="h-8 w-8 p-0">
             <RefreshCw size={15} />
           </Button>
@@ -486,6 +460,31 @@ export default function OrdersPage() {
                 mobileTab !== 'cart' && 'hidden lg:flex',
               )}
             >
+              {table && (
+                <div className="flex items-center justify-end gap-2 mb-2 pb-2 border-b border-slate-100 dark:border-slate-800">
+                  <button
+                    onClick={() => {
+                      setScanModalOpen(true)
+                      setTimeout(() => setCameraOn(true), 100)
+                    }}
+                    className="flex items-center gap-1 rounded-lg bg-slate-50 border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-100 active:scale-95"
+                  >
+                    <QrCode size={13} />
+                    <span>Quét</span>
+                  </button>
+                  <button
+                    onClick={() => setVatModalOpen(true)}
+                    className={`flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-colors active:scale-95 ${
+                      vatSaved
+                        ? 'bg-green-50 border border-green-300 text-green-700 hover:bg-green-100'
+                        : 'bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100'
+                    }`}
+                  >
+                    <FileText size={13} />
+                    <span>VAT</span>
+                  </button>
+                </div>
+              )}
               <OrderPanel
                 tableId={table.id}
                 order={order}
