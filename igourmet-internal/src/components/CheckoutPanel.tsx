@@ -136,7 +136,16 @@ export default function CheckoutPanel({
         const res = await checkoutApi.getIntent(table.id)
         if (!res.hasIntent) {
           clearInterval(t)
-          setPaidInvoiceId(intent.invoiceId || 1)
+          if (intent.invoiceId) {
+            const inv = await checkoutApi.getLatestInvoice(table.id)
+            if (inv && inv.status === 'PAID') {
+              setPaidInvoiceId(intent.invoiceId)
+            } else {
+              setIntent(null)
+            }
+          } else {
+            setIntent(null)
+          }
         }
       } catch { /* ignore */ }
     }, 5000)

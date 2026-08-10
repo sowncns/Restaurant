@@ -36,10 +36,11 @@ async function sendVatInvoiceEmail(tableId, invoice) {
     const itemRows = items
       .map(
         (it) =>
-          `<tr><td style="padding:6px 10px;border-bottom:1px solid #eee">${it.name}</td>
-           <td style="padding:6px 10px;border-bottom:1px solid #eee;text-align:center">${it.quantity}</td>
-           <td style="padding:6px 10px;border-bottom:1px solid #eee;text-align:right">${money(it.price)}đ</td>
-           <td style="padding:6px 10px;border-bottom:1px solid #eee;text-align:right">${money(it.line_total)}đ</td></tr>`,
+          `<tr><td style="padding:6px 10px;border-bottom:1px solid #eee">${it.item_name || it.name || ''}</td>
+              <td style="padding:6px 10px;border-bottom:1px solid #eee;text-align:center">${it.quantity || 0}</td>
+              <td style="padding:6px 10px;border-bottom:1px solid #eee;text-align:right">${money(it.unit_price || it.price || 0)}đ</td>
+              <td style="padding:6px 10px;border-bottom:1px solid #eee;text-align:right">${money(it.total_price || it.line_total || 0)}đ</td>
+            </tr>`,
       )
       .join("");
 

@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useMemo, useRef } from 'react'
-import { ArrowLeft, RefreshCw, Zap, Grid3x3, Utensils, ShoppingCart, QrCode, Camera, X, User, FileText } from 'lucide-react'
+import { ArrowLeft, RefreshCw, Zap, Grid3x3, Utensils, ShoppingCart, QrCode, Camera, X, FileText } from 'lucide-react'
 import { tablesApi, type DiningTable } from '../api/tables'
 import { menuApi, type MenuItem, type Category } from '../api/menu'
 import { ordersApi, cancelApi, type Order, type OrderItem, type CancelReason } from '../api/orders'
@@ -281,6 +281,7 @@ export default function OrdersPage() {
         voucher: res.voucherApplied ?? undefined,
       })
       setScanToken('')
+      setScanModalOpen(false)
       setCameraOn(false)
     } catch (e: any) {
       setScanRes(e.response?.data?.message || e.message || 'Lỗi quét mã')
@@ -361,21 +362,7 @@ export default function OrdersPage() {
         </div>
 
         <div className="flex items-center gap-1.5">
-          {scanResult && (
-            <div className="flex items-center gap-1 whitespace-nowrap rounded-lg bg-slate-100 dark:bg-slate-800 px-2 py-1">
-              <User size={11} className="text-slate-500 shrink-0" />
-              <span className="text-[11px] font-semibold text-slate-700 dark:text-slate-200 max-w-[90px] truncate">
-                {scanResult.name}
-              </span>
-              <span className={`shrink-0 text-[9px] font-bold px-1 py-0.5 rounded ${
-                scanResult.type === 'VOUCHER'
-                  ? 'bg-emerald-100 text-emerald-700'
-                  : 'bg-violet-100 text-violet-700'
-              }`}>
-                {scanResult.type === 'VOUCHER' ? 'VCH' : 'MBR'}
-              </span>
-            </div>
-          )}
+
           <Button variant="ghost" size="sm" onClick={loadTables} className="h-8 w-8 p-0">
             <RefreshCw size={15} />
           </Button>
@@ -461,28 +448,45 @@ export default function OrdersPage() {
               )}
             >
               {table && (
-                <div className="flex items-center justify-end gap-2 mb-2 pb-2 border-b border-slate-100 dark:border-slate-800">
-                  <button
-                    onClick={() => {
-                      setScanModalOpen(true)
-                      setTimeout(() => setCameraOn(true), 100)
-                    }}
-                    className="flex items-center gap-1 rounded-lg bg-slate-50 border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-100 active:scale-95"
-                  >
-                    <QrCode size={13} />
-                    <span>Quét</span>
-                  </button>
-                  <button
-                    onClick={() => setVatModalOpen(true)}
-                    className={`flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-colors active:scale-95 ${
-                      vatSaved
-                        ? 'bg-green-50 border border-green-300 text-green-700 hover:bg-green-100'
-                        : 'bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100'
-                    }`}
-                  >
-                    <FileText size={13} />
-                    <span>VAT</span>
-                  </button>
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-2 pb-2 border-b border-slate-100 dark:border-slate-800">
+                  <div className="flex items-center gap-1">
+                    {scanResult && (
+                      <div className="flex items-center gap-1 whitespace-nowrap rounded-lg bg-emerald-50 border border-emerald-200 px-2 py-1">
+                        <span className="text-xs font-semibold text-emerald-800">
+                          {scanResult.name}
+                        </span>
+                        <span className={`shrink-0 text-[10px] font-bold px-1 py-0.5 rounded ${
+                          scanResult.type === 'VOUCHER'
+                            ? 'bg-emerald-200 text-emerald-800'
+                            : 'bg-violet-200 text-violet-800'
+                        }`}>
+                          {scanResult.type === 'VOUCHER' ? 'VCH' : 'MBR'}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex items-center justify-end gap-2">
+                    <button
+                      onClick={() => {
+                        setScanModalOpen(true)
+                      }}
+                      className="flex items-center gap-1 rounded-lg bg-slate-50 border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-100 active:scale-95"
+                    >
+                      <QrCode size={13} />
+                      <span>Quét</span>
+                    </button>
+                    <button
+                      onClick={() => setVatModalOpen(true)}
+                      className={`flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-colors active:scale-95 ${
+                        vatSaved
+                          ? 'bg-green-50 border border-green-300 text-green-700 hover:bg-green-100'
+                          : 'bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100'
+                      }`}
+                    >
+                      <FileText size={13} />
+                      <span>VAT</span>
+                    </button>
+                  </div>
                 </div>
               )}
               <OrderPanel

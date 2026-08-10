@@ -132,10 +132,11 @@ async function settleInvoicePayment(orderCode, paidAmount, isSuccess) {
           
           const m = (n) => Number(n).toLocaleString("vi-VN");
           const rows = items.map((it) =>
-            `<tr><td style="padding:6px 10px;border-bottom:1px solid #eee">${it.name}</td>
-             <td style="padding:6px 10px;border-bottom:1px solid #eee;text-align:center">${it.quantity}</td>
-             <td style="padding:6px 10px;border-bottom:1px solid #eee;text-align:right">${m(it.price)}đ</td>
-             <td style="padding:6px 10px;border-bottom:1px solid #eee;text-align:right">${m(it.line_total)}đ</td></tr>`
+            `<tr><td style="padding:6px 10px;border-bottom:1px solid #eee">${it.item_name || it.name || ''}</td>
+                <td style="padding:6px 10px;border-bottom:1px solid #eee;text-align:center">${it.quantity || 0}</td>
+                <td style="padding:6px 10px;border-bottom:1px solid #eee;text-align:right">${m(it.unit_price || it.price || 0)}đ</td>
+                <td style="padding:6px 10px;border-bottom:1px solid #eee;text-align:right">${m(it.total_price || it.line_total || 0)}đ</td>
+              </tr>`
           ).join("");
           const html = `<div style="font-family:system-ui,sans-serif;max-width:600px;margin:0 auto;color:#333">
             <h2 style="text-align:center;color:#1e293b">HÓA ĐƠN GIÁ TRỊ GIA TĂNG</h2>
