@@ -92,7 +92,7 @@ exports.insertInvoice = (client, inv) =>
     .query(
       `INSERT INTO invoices (invoice_code, company_id, branch_id, table_id, amount, status, customer_id, items)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-       RETURNING invoice_id AS id, invoice_code, amount, status, customer_id`,
+       RETURNING invoice_id AS id, invoice_code, amount, status, customer_id, items`,
       [inv.invoice_code, inv.company_id, inv.branch_id, inv.table_id, inv.amount, inv.status, inv.customer_id, inv.items]
     )
     .then((r) => r.rows[0]);

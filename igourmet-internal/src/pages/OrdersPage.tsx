@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useMemo, useRef } from 'react'
-import { ArrowLeft, RefreshCw, Zap, Grid3x3, Utensils, ShoppingCart, QrCode, Camera, X, FileText } from 'lucide-react'
+import { ArrowLeft, Zap, Grid3x3, Utensils, ShoppingCart, QrCode, Camera, X, FileText } from 'lucide-react'
 import { tablesApi, type DiningTable } from '../api/tables'
 import { menuApi, type MenuItem, type Category } from '../api/menu'
 import { ordersApi, cancelApi, type Order, type OrderItem, type CancelReason } from '../api/orders'
@@ -214,12 +214,12 @@ export default function OrdersPage() {
     setErr('')
     try {
       if (!order) {
-        const res = await ordersApi.create({ table_id: table.id, order_items: lines })
-        setOrder(res)
+        await ordersApi.create({ table_id: table.id, order_items: lines })
       } else {
-        const res = await ordersApi.addItems(order.order_id, lines)
-        setOrder(res)
+        await ordersApi.addItems(order.order_id, lines)
       }
+      const updatedOrder = await ordersApi.getActiveForTable(table.id)
+      setOrder(updatedOrder)
       setCart({})
       loadTables()
       setMobileTab('menu')
@@ -359,13 +359,6 @@ export default function OrdersPage() {
               {table.table_number}
             </Badge>
           )}
-        </div>
-
-        <div className="flex items-center gap-1.5">
-
-          <Button variant="ghost" size="sm" onClick={loadTables} className="h-8 w-8 p-0">
-            <RefreshCw size={15} />
-          </Button>
         </div>
       </div>
 

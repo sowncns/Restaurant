@@ -142,9 +142,9 @@ async function settleInvoicePayment(orderCode, paidAmount, isSuccess) {
             <h2 style="text-align:center;color:#1e293b">HÓA ĐƠN GIÁ TRỊ GIA TĂNG</h2>
             <p style="text-align:center;color:#64748b;font-size:14px">Mã HĐ: <b>${invoice.invoice_code}</b></p>
             <hr style="border:none;border-top:1px solid #e2e8f0;margin:16px 0"/>
-            ${vat.companyName ? `<p><b>Đơn vị:</b> ${vat.companyName}</p>` : ""}
-            ${vat.taxCode ? `<p><b>MST:</b> ${vat.taxCode}</p>` : ""}
-            ${vat.address ? `<p><b>Địa chỉ:</b> ${vat.address}</p>` : ""}
+            <p><b>Đơn vị:</b> ${vat.companyName || ""}</p>
+            <p><b>MST:</b> ${vat.taxCode || ""}</p>
+            <p><b>Địa chỉ:</b> ${vat.address || ""}</p>
             <hr style="border:none;border-top:1px solid #e2e8f0;margin:16px 0"/>
             <table style="width:100%;border-collapse:collapse;font-size:14px">
               <thead><tr style="background:#f8fafc">
