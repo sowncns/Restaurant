@@ -61,7 +61,7 @@ exports.findReceipts = (companyId, { status, supplierId, limit = 100 } = {}) => 
   values.push(limit);
   return pool
     .query(
-      `SELECT pr.*, pr.purchase_receipt_id AS id, s.supplier_name, s.supplier_code,
+      `SELECT pr.*, pr.purchase_receipt_id AS id, s.supplier_name, s.supplier_code, s.email AS supplier_email,
               b.name AS branch_name, e.full_name AS created_by_name
        FROM purchase_receipts pr
        JOIN suppliers s ON s.supplier_id = pr.supplier_id
@@ -77,7 +77,7 @@ exports.findReceipts = (companyId, { status, supplierId, limit = 100 } = {}) => 
 exports.findReceiptById = (id, companyId) =>
   pool
     .query(
-      `SELECT pr.*, pr.purchase_receipt_id AS id, s.supplier_name, s.supplier_code,
+      `SELECT pr.*, pr.purchase_receipt_id AS id, s.supplier_name, s.supplier_code, s.email AS supplier_email,
               b.name AS branch_name, e.full_name AS created_by_name
        FROM purchase_receipts pr
        JOIN suppliers s ON s.supplier_id = pr.supplier_id
@@ -137,7 +137,7 @@ exports.createReceipt = async (companyId, header, items) => {
   }
 };
 
-// Xac nhan phieu: cong ton kho tung nguyen lieu + sinh inventory_transactions (PURCHASE),
+// Xac nhan phieu: cong ton kho tung nguyen lieu trong branch_inventory + sinh inventory_transactions (PURCHASE),
 // cap nhat cost_price theo don gia moi (neu > 0), chuyen phieu -> CONFIRMED. Nguyen tu.
 exports.confirmReceipt = async (receiptId, companyId, staffId) => {
   const client = await pool.connect();
@@ -145,12 +145,15 @@ exports.confirmReceipt = async (receiptId, companyId, staffId) => {
     await client.query("BEGIN");
     const receipt = (
       await client.query(
-        "SELECT purchase_receipt_id AS id, status FROM purchase_receipts WHERE purchase_receipt_id = $1 AND company_id = $2 FOR UPDATE",
+        "SELECT purchase_receipt_id AS id, status, branch_id FROM purchase_receipts WHERE purchase_receipt_id = $1 AND company_id = $2 FOR UPDATE",
         [receiptId, companyId]
       )
     ).rows[0];
     if (!receipt) { await client.query("ROLLBACK"); return { error: "NOT_FOUND" }; }
     if (receipt.status !== "DRAFT") { await client.query("ROLLBACK"); return { error: "NOT_DRAFT", status: receipt.status }; }
+    if (!receipt.branch_id) { await client.query("ROLLBACK"); return { error: "NO_BRANCH" }; }
+
+    const branchId = receipt.branch_id;
 
     const items = (
       await client.query(
@@ -160,31 +163,55 @@ exports.confirmReceipt = async (receiptId, companyId, staffId) => {
     ).rows;
 
     for (const it of items) {
-      const ing = (
+      // Kiem tra nguyen lieu ton tai trong cong ty
+      const ingCheck = (
         await client.query(
-          "SELECT ingredient_id AS id, current_stock FROM ingredients WHERE ingredient_id = $1 AND company_id = $2 FOR UPDATE",
+          "SELECT ingredient_id AS id FROM ingredients WHERE ingredient_id = $1 AND company_id = $2",
           [it.ingredient_id, companyId]
         )
       ).rows[0];
-      if (!ing) { await client.query("ROLLBACK"); return { error: "INGREDIENT_NOT_FOUND", ingredientId: it.ingredient_id }; }
+      if (!ingCheck) { await client.query("ROLLBACK"); return { error: "INGREDIENT_NOT_FOUND", ingredientId: it.ingredient_id }; }
 
-      const before = Number(ing.current_stock);
-      const after = before + Number(it.quantity);
       const price = Number(it.unit_price);
 
+      // Upsert branch_inventory: tao record neu chua co, roi lock de doc stock
       await client.query(
-        `UPDATE ingredients
-         SET current_stock = $1,
-             cost_price = CASE WHEN $2 > 0 THEN $2 ELSE cost_price END,
-             updated_at = NOW()
-         WHERE ingredient_id = $3`,
-        [after, price, it.ingredient_id]
+        `INSERT INTO branch_inventory (branch_id, ingredient_id, current_stock, minimum_stock)
+         VALUES ($1,$2,0,0)
+         ON CONFLICT (branch_id, ingredient_id) DO NOTHING`,
+        [branchId, it.ingredient_id]
       );
+
+      const bi = (
+        await client.query(
+          "SELECT current_stock FROM branch_inventory WHERE branch_id = $1 AND ingredient_id = $2 FOR UPDATE",
+          [branchId, it.ingredient_id]
+        )
+      ).rows[0];
+
+      const before = Number(bi.current_stock);
+      const after = before + Number(it.quantity);
+
+      // Cap nhat ton kho chi nhanh
+      await client.query(
+        "UPDATE branch_inventory SET current_stock = $1, updated_at = NOW() WHERE branch_id = $2 AND ingredient_id = $3",
+        [after, branchId, it.ingredient_id]
+      );
+
+      // Cap nhat cost_price o bang ingredients
+      if (price > 0) {
+        await client.query(
+          "UPDATE ingredients SET cost_price = $1, updated_at = NOW() WHERE ingredient_id = $2",
+          [price, it.ingredient_id]
+        );
+      }
+
+      // Ghi lich su
       await client.query(
         `INSERT INTO inventory_transactions
-           (ingredient_id, transaction_type, reference_type, reference_id, quantity, stock_before, stock_after, created_by, note)
-         VALUES ($1,'PURCHASE','PURCHASE_RECEIPT',$2,$3,$4,$5,$6,$7)`,
-        [it.ingredient_id, receiptId, it.quantity, before, after, staffId ?? null,
+           (ingredient_id, branch_id, transaction_type, reference_type, reference_id, quantity, stock_before, stock_after, created_by, note)
+         VALUES ($1,$2,'PURCHASE','PURCHASE_RECEIPT',$3,$4,$5,$6,$7,$8)`,
+        [it.ingredient_id, branchId, receiptId, it.quantity, before, after, staffId ?? null,
          `Nhập kho theo phiếu #${receiptId}`]
       );
     }
@@ -208,7 +235,7 @@ exports.confirmReceipt = async (receiptId, companyId, staffId) => {
 exports.findReceiptByCode = (code, companyId) =>
   pool
     .query(
-      `SELECT pr.*, pr.purchase_receipt_id AS id, s.supplier_name, s.supplier_code,
+      `SELECT pr.*, pr.purchase_receipt_id AS id, s.supplier_name, s.supplier_code, s.email AS supplier_email,
               b.name AS branch_name, e.full_name AS created_by_name
        FROM purchase_receipts pr
        JOIN suppliers s ON s.supplier_id = pr.supplier_id
@@ -219,7 +246,7 @@ exports.findReceiptByCode = (code, companyId) =>
     )
     .then((r) => r.rows[0]);
 
-// Import receipt: confirm + auto-create missing ingredients
+// Import receipt: confirm + auto-create missing ingredients, dung branch_inventory de luu ton kho
 exports.importReceipt = async (receiptId, companyId, branchId, staffId) => {
   const client = await pool.connect();
   try {
@@ -235,6 +262,7 @@ exports.importReceipt = async (receiptId, companyId, branchId, staffId) => {
     if (receipt.status === "CANCELLED") { await client.query("ROLLBACK"); return { error: "CANCELLED" }; }
 
     const effectiveBranchId = branchId || receipt.branch_id;
+    if (!effectiveBranchId) { await client.query("ROLLBACK"); return { error: "NO_BRANCH" }; }
 
     const items = (
       await client.query(
@@ -248,38 +276,65 @@ exports.importReceipt = async (receiptId, companyId, branchId, staffId) => {
     ).rows;
 
     for (const it of items) {
-      // Check if ingredient exists for this company
-      let ing = (
+      // Kiem tra hoac auto-create ingredient
+      let ingId = it.ingredient_id;
+      const ingCheck = (
         await client.query(
-          "SELECT ingredient_id AS id, current_stock FROM ingredients WHERE ingredient_id = $1 AND company_id = $2 FOR UPDATE",
+          "SELECT ingredient_id AS id FROM ingredients WHERE ingredient_id = $1 AND company_id = $2",
           [it.ingredient_id, companyId]
         )
       ).rows[0];
 
-      if (!ing) {
-        // Auto-create ingredient
-        ing = (
+      if (!ingCheck) {
+        // Auto-create ingredient (khong co current_stock nua - luu trong branch_inventory)
+        const newIng = (
           await client.query(
-            `INSERT INTO ingredients (company_id, branch_id, ingredient_code, ingredient_name, unit, current_stock, minimum_stock, cost_price)
-             VALUES ($1, $2, $3, $4, $5, 0, 0, $6)
-             RETURNING ingredient_id AS id, current_stock`,
-            [companyId, effectiveBranchId, it.ingredient_code || `NL-${it.ingredient_id}`, it.ingredient_name || `Nguyên liệu ${it.ingredient_id}`, it.unit || 'kg', Number(it.unit_price) || 0]
+            `INSERT INTO ingredients (company_id, ingredient_code, ingredient_name, unit, cost_price)
+             VALUES ($1, $2, $3, $4, $5)
+             RETURNING ingredient_id AS id`,
+            [companyId, it.ingredient_code || `NL-${it.ingredient_id}`, it.ingredient_name || `Nguyên liệu ${it.ingredient_id}`, it.unit || 'kg', Number(it.unit_price) || 0]
           )
         ).rows[0];
+        ingId = newIng.id;
       }
 
-      const before = Number(ing.current_stock);
-      const after = before + Number(it.quantity);
       const price = Number(it.unit_price);
 
+      // Upsert branch_inventory
       await client.query(
-        `UPDATE ingredients SET current_stock = $1, cost_price = CASE WHEN $2 > 0 THEN $2 ELSE cost_price END, updated_at = NOW() WHERE ingredient_id = $3`,
-        [after, price, ing.id]
+        `INSERT INTO branch_inventory (branch_id, ingredient_id, current_stock, minimum_stock)
+         VALUES ($1,$2,0,0)
+         ON CONFLICT (branch_id, ingredient_id) DO NOTHING`,
+        [effectiveBranchId, ingId]
       );
+
+      const bi = (
+        await client.query(
+          "SELECT current_stock FROM branch_inventory WHERE branch_id = $1 AND ingredient_id = $2 FOR UPDATE",
+          [effectiveBranchId, ingId]
+        )
+      ).rows[0];
+
+      const before = Number(bi.current_stock);
+      const after = before + Number(it.quantity);
+
       await client.query(
-        `INSERT INTO inventory_transactions (ingredient_id, transaction_type, reference_type, reference_id, quantity, stock_before, stock_after, created_by, note)
-         VALUES ($1,'PURCHASE','PURCHASE_RECEIPT',$2,$3,$4,$5,$6,$7)`,
-        [ing.id, receiptId, it.quantity, before, after, staffId ?? null, `Nhập kho theo phiếu #${receiptId}`]
+        "UPDATE branch_inventory SET current_stock = $1, updated_at = NOW() WHERE branch_id = $2 AND ingredient_id = $3",
+        [after, effectiveBranchId, ingId]
+      );
+
+      if (price > 0) {
+        await client.query(
+          "UPDATE ingredients SET cost_price = $1, updated_at = NOW() WHERE ingredient_id = $2",
+          [price, ingId]
+        );
+      }
+
+      await client.query(
+        `INSERT INTO inventory_transactions
+           (ingredient_id, branch_id, transaction_type, reference_type, reference_id, quantity, stock_before, stock_after, created_by, note)
+         VALUES ($1,$2,'PURCHASE','PURCHASE_RECEIPT',$3,$4,$5,$6,$7,$8)`,
+        [ingId, effectiveBranchId, receiptId, it.quantity, before, after, staffId ?? null, `Nhập kho theo phiếu #${receiptId}`]
       );
     }
 

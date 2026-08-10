@@ -60,7 +60,9 @@ exports.createReceipt = asyncHandler(async (req, res) => {
 
 exports.confirmReceipt = asyncHandler(async (req, res) => {
   const id = parseId(req.params.id, "receipt id");
+  console.log("id", id);
   const receipt = await service.confirmReceipt(id, cid(req), req.user.id);
+
   audit.record(audit.ctx(req), {
     action: "CONFIRM", entityType: "PURCHASE_RECEIPT", entityId: id,
     description: `Xác nhận phiếu nhập ${receipt.receipt_code} (NCC: ${receipt.supplier_name})`,
@@ -92,4 +94,10 @@ exports.importReceiptByCode = asyncHandler(async (req, res) => {
 exports.cancelReceipt = asyncHandler(async (req, res) => {
   const receipt = await service.cancelReceipt(parseId(req.params.id, "receipt id"), cid(req));
   res.json({ message: "Đã hủy phiếu nhập", receipt });
+});
+
+exports.emailReceipt = asyncHandler(async (req, res) => {
+  const id = parseId(req.params.id, "receipt id");
+  const result = await service.emailReceipt(id, cid(req));
+  res.json(result);
 });

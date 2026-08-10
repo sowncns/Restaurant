@@ -269,6 +269,22 @@ function ReceiptsTab({ companyId }: { companyId?: number }) {
     }
   }
 
+  async function handleImportByCode() {
+    if (!importCode) return alert('Vui lòng nhập mã phiếu')
+    setImporting(true)
+    try {
+      await procurementApi.importReceiptByCode(importCode, companyId)
+      alert('Nhập kho thành công theo mã phiếu: ' + importCode)
+      setOpenImport(false)
+      setImportCode('')
+      void load()
+    } catch (e) {
+      alert(errMsg(e))
+    } finally {
+      setImporting(false)
+    }
+  }
+
   const statusColor = (s: string) => {
     if (s === 'CONFIRMED') return 'bg-green-100 text-green-700'
     if (s === 'CANCELLED') return 'bg-red-100 text-red-600'
@@ -277,7 +293,7 @@ function ReceiptsTab({ companyId }: { companyId?: number }) {
   const statusLabel = (s: string) => {
     if (s === 'CONFIRMED') return 'Đã nhập'
     if (s === 'CANCELLED') return 'Đã hủy'
-    return 'Nháp'
+    return 'Chưa nhập'
   }
 
   return (
@@ -408,9 +424,17 @@ function ReceiptDetail({ id, companyId, onClose }: { id: number; companyId?: num
               <Button variant="secondary" onClick={printReceipt}>
                 <Printer size={16} /> In phiếu
               </Button>
-              <Button variant="secondary" onClick={emailSupplier} disabled={emailing}>
-                <Mail size={16} /> {emailing ? 'Đang gửi...' : 'Gửi email NCC'}
-              </Button>
+              <div title={!receipt.supplier_email ? 'Nhà cung cấp chưa có email — vào tab NCC để cập nhật' : `Gửi tới ${receipt.supplier_email}`}>
+                <Button
+                  variant="secondary"
+                  onClick={emailSupplier}
+                  disabled={emailing || !receipt.supplier_email}
+                  className={!receipt.supplier_email ? 'opacity-40 cursor-not-allowed' : ''}
+                >
+                  <Mail size={16} />
+                  {emailing ? 'Đang gửi...' : receipt.supplier_email ? 'Gửi email NCC' : 'NCC chưa có email'}
+                </Button>
+              </div>
             </div>
             <Button variant="secondary" onClick={onClose}>Đóng</Button>
           </div>
@@ -492,12 +516,19 @@ function ReceiptForm({ companyId, onClose, onSaved }: {
     <Modal open title="Tạo phiếu nhập kho" onClose={onClose}>
       <div className="flex flex-col gap-3 max-h-[70vh] overflow-y-auto">
         <div className="grid grid-cols-2 gap-3">
-          <Select label="Nhà cung cấp" value={supplierId} onChange={(e) => setSupplierId(Number(e.target.value))}>
-            <option value={0}>-- Chọn NCC --</option>
-            {suppliers.filter((s) => s.status === 'ACTIVE').map((s) => (
-              <option key={s.id} value={s.id}>{s.supplier_name}</option>
-            ))}
-          </Select>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Nhà cung cấp</label>
+            {suppliers.filter((s) => s.status === 'ACTIVE').length === 0 ? (
+              <div className="text-sm text-red-500 py-2">Chưa có NCC nào đang hoạt động</div>
+            ) : (
+              <Select value={supplierId} onChange={(e) => setSupplierId(Number(e.target.value))}>
+                <option value={0}>-- Chọn NCC --</option>
+                {suppliers.filter((s) => s.status === 'ACTIVE').map((s) => (
+                  <option key={s.id} value={s.id}>{s.supplier_name}</option>
+                ))}
+              </Select>
+            )}
+          </div>
           {(isSuperAdmin || isCompanyAdmin) && (
             <Select label="Chi nhánh" value={branchId ?? ''} onChange={(e) => setBranchId(e.target.value ? Number(e.target.value) : undefined)}>
               <option value="">-- Chọn --</option>

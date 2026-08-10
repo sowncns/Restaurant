@@ -104,7 +104,7 @@ export const procurementApi = {
   },
   async createReceipt(body: ReceiptInput, companyId?: number): Promise<number> {
     const { data } = await api.post('/internal/procurement/receipts', { ...body, companyId }, withCompany(companyId))
-    return data.receiptId
+    return data.receipt?.id ?? data.receiptId
   },
   async confirmReceipt(id: number, companyId?: number): Promise<void> {
     await api.post(`/internal/procurement/receipts/${id}/confirm`, { companyId }, withCompany(companyId))

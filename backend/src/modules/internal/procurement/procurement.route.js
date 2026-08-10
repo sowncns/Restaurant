@@ -32,6 +32,7 @@ router.post("/receipts/import-by-code", managerOnly, controller.importReceiptByC
 router.get("/receipts/:id", staffRead, controller.getReceipt);
 router.post("/receipts", managerOnly, validate(createReceiptSchema), controller.createReceipt);
 router.post("/receipts/:id/confirm", managerOnly, controller.confirmReceipt);
+router.post("/receipts/:id/email", managerOnly, controller.emailReceipt);
 router.delete("/receipts/:id", managerOnly, controller.cancelReceipt);
 
 module.exports = router;
