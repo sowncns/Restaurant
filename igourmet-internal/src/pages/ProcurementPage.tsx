@@ -269,22 +269,6 @@ function ReceiptsTab({ companyId }: { companyId?: number }) {
     }
   }
 
-  async function handleImportByCode() {
-    if (!importCode) return alert('Vui lòng nhập mã phiếu')
-    setImporting(true)
-    try {
-      await procurementApi.importReceiptByCode(importCode, companyId)
-      alert('Nhập kho thành công theo mã phiếu: ' + importCode)
-      setOpenImport(false)
-      setImportCode('')
-      void load()
-    } catch (e) {
-      alert(errMsg(e))
-    } finally {
-      setImporting(false)
-    }
-  }
-
   const statusColor = (s: string) => {
     if (s === 'CONFIRMED') return 'bg-green-100 text-green-700'
     if (s === 'CANCELLED') return 'bg-red-100 text-red-600'

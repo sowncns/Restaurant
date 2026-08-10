@@ -45,6 +45,7 @@ export interface Receipt {
   supplier_id: number
   supplier_name: string
   supplier_code: string
+  supplier_email: string | null
   branch_name: string | null
   receipt_code: string
   receipt_date: string
