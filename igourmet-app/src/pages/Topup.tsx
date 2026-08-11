@@ -63,7 +63,7 @@ const Topup = () => {
       const returnUrl = `${window.location.origin}/`;
       const cancelUrl = `${window.location.origin}/topup`;
 
-      const res: any = await api.post('/payment/create', {
+      const res: any = await api.post('/customer/payment/create', {
         amount,
         description: 'Nạp tiền ví',
         returnUrl: returnUrl,
