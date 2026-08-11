@@ -2,19 +2,22 @@ name: Deploy to VPS
 
 on:
   push:
-    branches: [ "main" ] # Hoặc nhánh bạn muốn (master, dev...)
+    branches: [ "main" ] # Hoặc nhánh bạn đang code (ví dụ: master)
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Executing remote ssh commands
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.VPS_IP }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          script: |
-            cd /duong/dan/den/thu/muc/du/an/tren/vps
-            git pull origin main
-            docker-compose up -d --build
+     runs-on: ubuntu-latest
+     steps:
+       - name: Checkout code
+         uses: actions/checkout@v4
+
+       - name: Executing remote ssh commands
+         uses: appleboy/ssh-action@master
+         with:
+           host: ${{ secrets.VPS_IP }}
+           username: ${{ secrets.VPS_USER }}
+           key: ${{ secrets.VPS_SSH_KEY }}
+           script: |
+             cd /home/sown/projects/NhaHang
+             git pull origin main
+             docker-compose up -d --build
