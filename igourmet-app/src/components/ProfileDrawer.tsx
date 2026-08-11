@@ -216,7 +216,10 @@ const ProfileDrawer = ({ isOpen, onClose, openVoucherModal }: ProfileDrawerProps
             </div>
 
             {/* Membership Card */}
-            <div className={`bg-gradient-to-br ${getCardBg()} rounded-[24px] p-6 text-white shadow-lg relative overflow-hidden mx-2 transition-colors duration-500`}>
+            <div 
+              onClick={() => { onClose(); navigate('/my-qr'); }}
+              className={`bg-gradient-to-br ${getCardBg()} rounded-[24px] p-6 text-white shadow-lg relative overflow-hidden mx-2 transition-colors duration-500 cursor-pointer`}
+            >
               <div className="absolute right-0 top-0 w-48 h-48 bg-white/10 rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2"></div>
               
               <div className="relative z-10">
