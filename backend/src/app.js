@@ -13,7 +13,6 @@ const { notFoundHandler, errorHandler } = require("./shared/middlewares/error.mi
 
 const app = express();
 
-// Sau reverse proxy (nginx...) can tin cay X-Forwarded-For de req.ip / rate-limit dung IP client that.
 app.set("trust proxy", 1);
 
 const allowedOrigins = env.CORS_ORIGINS.split(",").map((s) => s.trim()).filter(Boolean);
