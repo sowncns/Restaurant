@@ -701,13 +701,19 @@ function TableActionModal({
   const [note, setNote] = useState('')
   const [err, setErr] = useState('')
   const [emptyOrderId, setEmptyOrderId] = useState<number | null>(null)
+  const [canReleaseTable, setCanReleaseTable] = useState(false)
 
   useEffect(() => {
+    setEmptyOrderId(null)
+    setCanReleaseTable(false)
     if (table.status !== 'SERVING') return
     let cancelled = false
     ordersApi.getActiveForTable(table.id)
       .then((order) => {
-        if (!cancelled && order && (order.items?.length ?? 0) === 0) {
+        if (cancelled) return
+        if (!order) {
+          setCanReleaseTable(true)
+        } else if ((order.items?.length ?? 0) === 0) {
           setEmptyOrderId(order.order_id)
         }
       })
@@ -759,6 +765,20 @@ function TableActionModal({
     setErr('')
     try {
       await ordersApi.cancelEmpty(emptyOrderId)
+      onSaved()
+    } catch (e) {
+      alert(errMsg(e))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const releaseTable = async () => {
+    if (!canReleaseTable) return
+    if (!window.confirm(`Xác nhận khách đã rời bàn ${table.table_name || table.table_number}?`)) return
+    setBusy(true)
+    try {
+      await tablesApi.changeStatus(table.id, 'AVAILABLE')
       onSaved()
     } catch (e) {
       alert(errMsg(e))
@@ -843,6 +863,17 @@ function TableActionModal({
               >
                 <Trash2 size={18} />
                 <span>Hủy Mở Bàn</span>
+              </button>
+            )}
+
+            {canReleaseTable && (
+              <button
+                onClick={() => void releaseTable()}
+                disabled={busy}
+                className="col-span-2 flex items-center justify-center gap-2 rounded-xl border-2 border-teal-200 bg-teal-50 p-3 font-bold text-teal-700 hover:bg-teal-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-teal-900 dark:bg-teal-950/30 dark:text-teal-300"
+              >
+                <DoorOpen size={18} />
+                <span>Khách Đã Rời Bàn</span>
               </button>
             )}
 

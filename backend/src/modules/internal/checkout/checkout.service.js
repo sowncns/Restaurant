@@ -215,7 +215,7 @@ async function createInvoice(currentUser, tableId, paymentMethod, customerIdFrom
       return { message: "Đã lưu hóa đơn vào công nợ (Chưa thanh toán).", intent: { invoiceId: invoice.id }, depositApplied };
     }
 
-    // CASH -> dong ban luon (kho da tru luc bep nau)
+    // CASH -> hoan tat order, giu ban SERVING den khi nhan vien xac nhan khach da roi.
     await applyCashback(client, invoice.id);
     await repo.completeOrders(client, tableId);
     await repo.setTableStatus(client, tableId, "SERVING");
@@ -232,7 +232,7 @@ async function createInvoice(currentUser, tableId, paymentMethod, customerIdFrom
     }
 
     void sendVatInvoiceEmail(tableId, invoice);
-    return { message: "Thanh toán thành công. Bàn đã được đóng.", invoice, depositApplied };
+    return { message: "Thanh toán thành công. Bàn đang chờ xác nhận khách rời.", invoice, depositApplied };
   } catch (err) {
     await client.query("ROLLBACK");
     throw err;

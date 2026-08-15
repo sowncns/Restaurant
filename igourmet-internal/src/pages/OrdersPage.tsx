@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useMemo, useRef } from 'react'
-import { ArrowLeft, Zap, Grid3x3, Utensils, ShoppingCart, QrCode, Camera, X, FileText } from 'lucide-react'
+import { ArrowLeft, Zap, Grid3x3, Utensils, ShoppingCart, QrCode, Camera, X, FileText, DoorOpen } from 'lucide-react'
 import { tablesApi, type DiningTable } from '../api/tables'
 import { menuApi, type MenuItem, type Category } from '../api/menu'
 import { ordersApi, cancelApi, type Order, type OrderItem, type CancelReason } from '../api/orders'
@@ -22,6 +22,7 @@ export default function OrdersPage() {
   const [categories, setCategories] = useState<Category[]>([])
   const [table, setTable] = useState<DiningTable | null>(null)
   const [order, setOrder] = useState<Order | null>(null)
+  const [canReleaseTable, setCanReleaseTable] = useState(false)
   const [cart, setCart] = useState<Record<number, CartLine>>({})
   const [noteFor, setNoteFor] = useState<number | null>(null)
   const [cancelItem, setCancelItem] = useState<OrderItem | null>(null)
@@ -71,9 +72,11 @@ export default function OrdersPage() {
 
   // Đổi bàn -> switch mobile view sang menu, load lại scan (voucher/thành viên) từ backend
   useEffect(() => {
+    let cancelled = false
     setCart({})
     setScanResult(null)
     setScanRes('')
+    setCanReleaseTable(false)
     if (!table) {
       setOrder(null)
       setMobileTab('tables')
@@ -82,8 +85,14 @@ export default function OrdersPage() {
     setMobileTab('menu')
     ordersApi
       .getActiveForTable(table.id)
-      .then(setOrder)
-      .catch(() => setOrder(null))
+      .then((activeOrder) => {
+        if (cancelled) return
+        setOrder(activeOrder)
+        setCanReleaseTable(table.status === 'SERVING' && activeOrder == null)
+      })
+      .catch(() => {
+        if (!cancelled) setOrder(null)
+      })
     // Khôi phục thông tin khách đã quét QR (backend vẫn còn lưu)
     checkoutApi.getTableVoucher(table.id)
       .then((v) => {
@@ -108,6 +117,7 @@ export default function OrdersPage() {
         }
       })
       .catch(() => { setVatInfo({ companyName: '', taxCode: '', address: '', email: '' }); setVatSaved(false) })
+    return () => { cancelled = true }
   }, [table])
 
   // Cart Stats
@@ -129,6 +139,7 @@ export default function OrdersPage() {
   // Handlers
   const handleSelectTable = (t: DiningTable) => {
     setErr('')
+    setCanReleaseTable(false)
     if (t.status === 'AVAILABLE') {
       setSelectedEmptyTable(t)
       setWalkinGuests('1')
@@ -240,6 +251,24 @@ export default function OrdersPage() {
       await ordersApi.cancelEmpty(order.order_id)
       setCart({})
       setOrder(null)
+      setTable(null)
+      setMobileTab('tables')
+      loadTables()
+    } catch (e) {
+      setErr(errMsg(e))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const handleReleaseTable = async () => {
+    if (!table || !canReleaseTable) return
+    if (!window.confirm(`Xác nhận khách đã rời bàn ${table.table_number}?`)) return
+
+    setBusy(true)
+    setErr('')
+    try {
+      await tablesApi.changeStatus(table.id, 'AVAILABLE')
       setTable(null)
       setMobileTab('tables')
       loadTables()
@@ -479,6 +508,16 @@ export default function OrdersPage() {
                     )}
                   </div>
                   <div className="flex items-center justify-end gap-2">
+                    {canReleaseTable && (
+                      <button
+                        onClick={() => void handleReleaseTable()}
+                        disabled={busy}
+                        className="flex items-center gap-1 rounded-lg border border-teal-200 bg-teal-50 px-2.5 py-1.5 text-xs font-semibold text-teal-700 transition-colors hover:bg-teal-100 active:scale-95 disabled:opacity-50"
+                      >
+                        <DoorOpen size={13} />
+                        <span>Khách rời bàn</span>
+                      </button>
+                    )}
                     {order && (order.items?.length ?? 0) === 0 && cartItemCount === 0 && (
                       <button
                         onClick={() => void handleCancelEmptyOrder()}

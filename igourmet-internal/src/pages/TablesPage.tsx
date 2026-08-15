@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Plus, Receipt } from 'lucide-react'
+import { DoorOpen, Plus, Receipt } from 'lucide-react'
 import { tablesApi, type DiningTable, type Section, type TableStatus } from '../api/tables'
 import { errMsg } from '../lib/errMsg'
 import { Button, PageHeader, Modal, Input, Select, Badge, ErrorText } from '../components/ui'
@@ -80,6 +80,17 @@ export default function TablesPage() {
     }
   }
 
+  async function releaseTable(t: DiningTable) {
+    if (!window.confirm(`Xác nhận khách đã rời bàn ${t.table_name || t.table_number}?`)) return
+    try {
+      await tablesApi.changeStatus(t.id, 'AVAILABLE')
+      setSelectedTable((current) => (current?.id === t.id ? null : current))
+      void load()
+    } catch (e) {
+      alert(errMsg(e))
+    }
+  }
+
   return (
     <div className="flex flex-col">
       <PageHeader
@@ -154,6 +165,17 @@ export default function TablesPage() {
                       </Badge>
                     </div>
                     <p className="mb-3 text-sm text-slate-500">Sức chứa: {t.capacity}</p>
+                    {isPaid && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          void releaseTable(t)
+                        }}
+                        className="mb-2 flex items-center justify-center gap-1.5 rounded-lg border border-teal-200 bg-teal-50 px-2 py-2 text-xs font-semibold text-teal-700 transition-colors hover:bg-teal-100"
+                      >
+                        <DoorOpen size={14} /> Khách rời bàn
+                      </button>
+                    )}
                     <Select
                       value={t.status}
                       onClick={(e) => e.stopPropagation()}
