@@ -2,7 +2,6 @@ import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { Gift, Home, Grid, Calendar as CalendarIcon, QrCode, User } from 'lucide-react';
 import VoucherModal from './VoucherModal';
 import ProfileDrawer from './ProfileDrawer';
-import PaymentModal from './PaymentModal';
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -169,9 +168,6 @@ const Layout = () => {
           setIsVoucherModalOpen(true);
         }}
       />
-      
-      {/* Payment Push Modal */}
-      <PaymentModal />
     </div>
   );
 };
