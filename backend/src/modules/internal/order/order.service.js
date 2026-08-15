@@ -163,6 +163,31 @@ async function getActiveOrderForTable(tableId, companyId, branchId) {
   return getOrder(active.id, companyId, branchId);
 }
 
+async function cancelEmptyOrder(user, orderId) {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const order = await repo.findOrderById(client, orderId, user.company_id, user.branch_id);
+    if (!order) throw new NotFound("Không tìm thấy order");
+    if (!repo.ACTIVE_STATUSES.includes(order.status)) {
+      throw new BadRequest("Chỉ có thể hủy order đang mở");
+    }
+    if (await repo.countOrderItems(client, orderId)) {
+      throw new BadRequest("Order đã có món, không thể hủy toàn bộ");
+    }
+
+    await repo.cancelOrder(client, orderId);
+    await repo.setTableStatus(client, order.table_id, "AVAILABLE");
+    await client.query("COMMIT");
+    return { order_id: orderId, table_id: order.table_id };
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
 // Quet QR thanh vien: tra ve thong tin khach + vi + voucher kha dung
 async function scanMemberQR(orderId, qrCode, companyId, branchId) {
   const customer = await repo.findCustomerByQR(qrCode);
@@ -434,6 +459,7 @@ module.exports = {
   getOrder,
   addOrderItems,
   getActiveOrderForTable,
+  cancelEmptyOrder,
   scanMemberQR,
   updateItemKitchenStatus,
   startCookingOrder,

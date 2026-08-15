@@ -230,6 +230,26 @@ export default function OrdersPage() {
     }
   }
 
+  const handleCancelEmptyOrder = async () => {
+    if (!order || (order.items?.length ?? 0) > 0) return
+    if (!window.confirm(`Đóng bàn ${table?.table_number}? Order chưa có món sẽ bị hủy.`)) return
+
+    setBusy(true)
+    setErr('')
+    try {
+      await ordersApi.cancelEmpty(order.order_id)
+      setCart({})
+      setOrder(null)
+      setTable(null)
+      setMobileTab('tables')
+      loadTables()
+    } catch (e) {
+      setErr(errMsg(e))
+    } finally {
+      setBusy(false)
+    }
+  }
+
   const handleServeItem = async (itemId: number) => {
     setBusy(true)
     setErr('')
@@ -459,6 +479,16 @@ export default function OrdersPage() {
                     )}
                   </div>
                   <div className="flex items-center justify-end gap-2">
+                    {order && (order.items?.length ?? 0) === 0 && cartItemCount === 0 && (
+                      <button
+                        onClick={() => void handleCancelEmptyOrder()}
+                        disabled={busy}
+                        className="flex items-center gap-1 rounded-lg border border-rose-200 bg-rose-50 px-2.5 py-1.5 text-xs font-semibold text-rose-600 transition-colors hover:bg-rose-100 active:scale-95 disabled:opacity-50"
+                      >
+                        <X size={13} />
+                        <span>Đóng bàn</span>
+                      </button>
+                    )}
                     <button
                       onClick={() => {
                         setScanModalOpen(true)

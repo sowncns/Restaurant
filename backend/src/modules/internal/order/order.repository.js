@@ -182,12 +182,21 @@ exports.findOrderScoped = (db, orderId, companyId, branchId) =>
 
 exports.findOrderById = (db, orderId, companyId, branchId) =>
   db
-    .query("SELECT *, order_id AS id FROM orders WHERE order_id = $1 AND company_id = $2 AND branch_id = $3", [
-      orderId,
-      companyId,
-      branchId,
-    ])
+    .query(
+      `SELECT *, order_id AS id FROM orders
+       WHERE order_id = $1 AND company_id = $2 AND branch_id = $3
+       FOR UPDATE`,
+      [orderId, companyId, branchId]
+    )
     .then((r) => r.rows[0]);
+
+exports.countOrderItems = (db, orderId) =>
+  db
+    .query("SELECT COUNT(*)::int AS count FROM order_items WHERE order_id = $1", [orderId])
+    .then((r) => r.rows[0].count);
+
+exports.cancelOrder = (db, orderId) =>
+  db.query("UPDATE orders SET status = 'CANCELLED', updated_at = NOW() WHERE order_id = $1", [orderId]);
 
 exports.findOrderItems = (db, orderId) =>
   db

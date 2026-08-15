@@ -73,6 +73,9 @@ export const ordersApi = {
     const { data } = await api.put(`/internal/orders/${orderId}/items`, { items })
     return data.order ?? data
   },
+  async cancelEmpty(orderId: number): Promise<void> {
+    await api.post(`/internal/orders/${orderId}/cancel-empty`)
+  },
   async updateItemKitchenStatus(itemId: number, status: KitchenStatus): Promise<void> {
     await api.patch(`/internal/orders/items/${itemId}/kitchen-status`, { status })
   },

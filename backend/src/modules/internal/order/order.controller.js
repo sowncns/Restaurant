@@ -38,6 +38,12 @@ exports.getActiveOrderForTable = asyncHandler(async (req, res) => {
   res.json(order || { message: "No active order for this table" });
 });
 
+exports.cancelEmptyOrder = asyncHandler(async (req, res) => {
+  const orderId = parseId(req.params.id, "order id");
+  const result = await service.cancelEmptyOrder(req.user, orderId);
+  res.json({ message: "Đã hủy order chưa có món và đóng bàn", ...result });
+});
+
 exports.scanMemberQR = asyncHandler(async (req, res) => {
   const orderId = parseId(req.params.id, "order id");
   const result = await service.scanMemberQR(

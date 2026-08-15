@@ -39,6 +39,7 @@ router.post("/kitchen/scan", canCook, validate(scanItemQrSchema), controller.com
 router.get("/table/:tableId/active", canRead, controller.getActiveOrderForTable);
 router.get("/:id", canRead, controller.getOrder);
 router.put("/:id/items", canWrite, validate(addItemsSchema), controller.addOrderItems);
+router.post("/:id/cancel-empty", canWrite, controller.cancelEmptyOrder);
 router.post("/:id/scan-qr", canWrite, validate(scanQrSchema), controller.scanMemberQR);
 // Bep bat dau nau ca don -> tru kho
 router.post("/:id/cook", canCook, controller.startCooking);

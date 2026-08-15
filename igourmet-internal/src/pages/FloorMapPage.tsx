@@ -700,6 +700,21 @@ function TableActionModal({
   const [time, setTime] = useState('')
   const [note, setNote] = useState('')
   const [err, setErr] = useState('')
+  const [emptyOrderId, setEmptyOrderId] = useState<number | null>(null)
+
+  useEffect(() => {
+    if (table.status !== 'SERVING') return
+    let cancelled = false
+    ordersApi.getActiveForTable(table.id)
+      .then((order) => {
+        if (!cancelled && order && (order.items?.length ?? 0) === 0) {
+          setEmptyOrderId(order.order_id)
+        }
+      })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [table.id, table.status])
+
   const openTable = async () => {
     setBusy(true)
     setErr('')
@@ -732,6 +747,21 @@ function TableActionModal({
       onSaved()
     } catch (e) {
       setErr(errMsg(e))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const cancelEmptyOrder = async () => {
+    if (!emptyOrderId) return
+    if (!window.confirm(`Hủy mở bàn ${table.table_name || table.table_number}?`)) return
+    setBusy(true)
+    setErr('')
+    try {
+      await ordersApi.cancelEmpty(emptyOrderId)
+      onSaved()
+    } catch (e) {
+      alert(errMsg(e))
     } finally {
       setBusy(false)
     }
@@ -804,6 +834,17 @@ function TableActionModal({
               <BookmarkPlus size={24} />
               <span>Giữ Bàn / Đặt Trước</span>
             </button>
+
+            {emptyOrderId && (
+              <button
+                onClick={() => void cancelEmptyOrder()}
+                disabled={busy}
+                className="col-span-2 flex items-center justify-center gap-2 rounded-xl border-2 border-rose-200 bg-rose-50 p-3 font-bold text-rose-700 hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-rose-900 dark:bg-rose-950/30 dark:text-rose-300"
+              >
+                <Trash2 size={18} />
+                <span>Hủy Mở Bàn</span>
+              </button>
+            )}
 
           </div>
         ) : mode === 'hold' ? (
