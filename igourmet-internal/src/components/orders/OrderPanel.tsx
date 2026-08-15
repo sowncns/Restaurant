@@ -75,9 +75,9 @@ export default function OrderPanel({
   }, [])
 
   return (
-    <div className="flex h-full flex-col justify-between w-full">
+    <div className="flex min-h-0 flex-1 flex-col justify-between w-full">
       {/* Scrollable Items List */}
-      <div className="flex-1 space-y-2 overflow-y-auto pr-0.5 custom-scrollbar">
+      <div className="min-h-0 flex-1 space-y-2 overflow-y-auto pr-0.5 custom-scrollbar">
         {empty && (
           <div className="flex flex-col items-center justify-center p-6 text-center">
             {isPaid ? (
