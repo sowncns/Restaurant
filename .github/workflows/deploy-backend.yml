@@ -8,6 +8,8 @@ on:
       - "backend/**"
       - ".github/workflows/deploy-backend.yml"
 
+  workflow_dispatch:
+
 permissions:
   contents: read
 
@@ -18,6 +20,7 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     defaults:
       run:
@@ -37,6 +40,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Nếu có test/build thì mở các bước này
+      # - name: Run tests
+      #   run: npm test
+
+      # - name: Build backend
+      #   run: npm run build
 
       - name: Configure SSH
         env:
@@ -44,25 +53,46 @@ jobs:
           VPS_PORT: ${{ secrets.VPS_PORT }}
           VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
         run: |
-            install -m 700 -d ~/.ssh
-            printf '%s' "$VPS_SSH_KEY" | base64 --decode > ~/.ssh/id_ed25519
-            chmod 600 ~/.ssh/id_ed25519
+          install -m 700 -d ~/.ssh
 
-            ssh-keygen -y -f ~/.ssh/id_ed25519 > /dev/null
+          printf '%s' "$VPS_SSH_KEY" |
+            base64 --decode > ~/.ssh/id_ed25519
 
-            ssh-keyscan -p "$VPS_PORT" -H "$VPS_HOST" >> ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/id_ed25519
+
+          # Kiểm tra private key hợp lệ
+          ssh-keygen -y -f ~/.ssh/id_ed25519 > /dev/null
+
+          ssh-keyscan -p "$VPS_PORT" -H "$VPS_HOST" \
+            >> ~/.ssh/known_hosts
+
+      - name: Test SSH connection
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_PORT: ${{ secrets.VPS_PORT }}
+        run: |
+          ssh \
+            -o BatchMode=yes \
+            -o ConnectTimeout=10 \
+            -i ~/.ssh/id_ed25519 \
+            -p "$VPS_PORT" \
+            "$VPS_USER@$VPS_HOST" \
+            "whoami && pwd"
+
       - name: Upload backend to VPS
         env:
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_USER: ${{ secrets.VPS_USER }}
           VPS_PORT: ${{ secrets.VPS_PORT }}
         run: |
-          rsync -az \
+          rsync -az --delete \
             --exclude=".git/" \
             --exclude="node_modules/" \
             --exclude=".env" \
             -e "ssh -i ~/.ssh/id_ed25519 -p $VPS_PORT" \
-            ./ "$VPS_USER@$VPS_HOST:/home/deploy/project/backend/"
+            ./ \
+            "$VPS_USER@$VPS_HOST:/home/deploy/project/backend/"
 
       - name: Install and restart backend
         env:
@@ -70,9 +100,12 @@ jobs:
           VPS_USER: ${{ secrets.VPS_USER }}
           VPS_PORT: ${{ secrets.VPS_PORT }}
         run: |
-          ssh -i ~/.ssh/id_ed25519 -p "$VPS_PORT" \
+          ssh \
+            -i ~/.ssh/id_ed25519 \
+            -p "$VPS_PORT" \
             "$VPS_USER@$VPS_HOST" \
             'cd /home/deploy/project/backend &&
              npm ci --omit=dev &&
              sudo -n /usr/bin/systemctl restart backend.service &&
-             sudo -n /usr/bin/systemctl status backend.service --no-pager'
+             /usr/bin/systemctl is-active backend.service &&
+             /usr/bin/systemctl status backend.service --no-pager -l'
