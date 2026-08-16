@@ -3,59 +3,11 @@ import { QrCode, RefreshCw, X, ClipboardList, FileText, ChevronDown, ChevronUp }
 import type { DiningTable } from '../api/tables'
 import { ordersApi, type Order, type OrderItem } from '../api/orders'
 import { checkoutApi, type ScanResult, type CheckoutIntent, type PaymentMethod, type VatInfo } from '../api/checkout'
-import { printKiemMon } from '../lib/kiemMon'
+import { printKiemMon, printPaymentInvoice } from '../lib/printInvoice'
 import { errMsg } from '../lib/errMsg'
 import { useRealtime } from '../lib/useRealtime'
 import QRCode from 'qrcode'
 import { Button, Modal, Input, ErrorText, Badge } from './ui'
-
-function printInvoiceHtml(invoice: any) {
-  const isDebt = invoice.status === 'UNPAID'
-  const html = `<!doctype html><html><head><meta charset="utf-8"><title>Hóa Đơn</title>
-  <style>
-    @page { size: 58mm auto; margin: 4mm; }
-    body { font-family: system-ui, sans-serif; margin: 0; font-size: 13px; color: #000; }
-    .center { text-align: center; }
-    .bold { font-weight: bold; }
-    .title { font-size: 18px; margin: 10px 0; }
-    .line { border-bottom: 1px dashed #000; margin: 8px 0; }
-    .flex { display: flex; justify-content: space-between; }
-    .mb { margin-bottom: 4px; }
-    .mt { margin-top: 8px; }
-    .item-name { font-weight: 600; margin-top: 4px; }
-    .debt-badge { border: 1px solid #999; text-align: center; padding: 4px 0; font-weight: bold; margin: 6px 0; font-size: 13px; }
-  </style></head><body>
-    <div class="center bold title">iGourmet</div>
-    <div class="center mb">${isDebt ? 'PHIẾU GHI NỢ' : 'HÓA ĐƠN THANH TOÁN'}</div>
-    ${isDebt ? '<div class="debt-badge">*** CHƯA THANH TOÁN — GHI NỢ ***</div>' : ''}
-    <div class="line"></div>
-    <div class="flex mb"><span>Mã HĐ:</span><span>${invoice.invoice_code}</span></div>
-    <div class="flex mb"><span>Bàn:</span><span class="bold">${invoice.table_name || invoice.table_number}</span></div>
-    <div class="flex mb"><span>Ngày:</span><span>${new Date(invoice.created_at).toLocaleString('vi-VN')}</span></div>
-    <div class="line"></div>
-    ${invoice.items?.map((it: any) => `
-      <div class="item-name">${it.item_name} ${it.is_mistake ? '(Nhầm lẫn)' : ''}</div>
-      <div class="flex">
-        <span>${it.quantity} x ${Number(it.unit_price).toLocaleString('vi-VN')}</span>
-        <span>${Number(it.total_price).toLocaleString('vi-VN')}</span>
-      </div>
-    `).join('') || ''}
-    <div class="line"></div>
-    <div class="flex bold mt" style="font-size: 15px">
-      <span>TỔNG CỘNG:</span>
-      <span>${Number(invoice.final_amount).toLocaleString('vi-VN')}đ</span>
-    </div>
-    ${isDebt ? '<div class="flex mt"><span>Trạng thái:</span><span class="bold">Chưa thanh toán (Ghi nợ)</span></div>' : ''}
-    <div class="center mt" style="margin-top: 20px; font-style: italic">Cảm ơn quý khách và hẹn gặp lại!</div>
-    <script>window.onload = function(){ window.print(); setTimeout(function(){ window.close() }, 500) }</script>
-  </body></html>`
-  const w = window.open('', '_blank', 'width=400,height=600')
-  if (w) {
-    w.document.write(html)
-    w.document.close()
-  }
-}
-
 
 export default function CheckoutPanel({
   table,
@@ -124,7 +76,7 @@ export default function CheckoutPanel({
         if (v && v.email) { setVatInfo(v); setVatSaved(true) }
       })
       .catch(() => {})
-  }, [loadOrder, loadIntent, loadVoucher])
+  }, [loadOrder, loadIntent, loadVoucher, table.id])
 
   useRealtime('/internal/orders/kitchen/stream', loadOrder)
 
@@ -161,7 +113,11 @@ export default function CheckoutPanel({
   const lineBase = (it: OrderItem) => Number(it.total_price) || Number(it.unit_price) * it.quantity || 0
   const lineNet = (it: OrderItem) => lineBase(it) * (1 - (Number(it.discount_percent) || 0) / 100)
   const total = billable.reduce((s, it) => s + lineNet(it), 0)
-  const finalTotal = Math.max(0, total - (scan?.discountAmount || 0))
+  const vatTotal = billable.reduce(
+    (sum, item) => sum + (lineNet(item) * (Number(item.vat_rate) || 0)) / 100,
+    0,
+  )
+  const finalTotal = Math.round(Math.max(0, total + vatTotal - (scan?.discountAmount || 0)))
 
   async function voidItem(orderItemId: number, name: string) {
     if (!window.confirm(`Void món "${name}" khỏi bill? Khách sẽ không phải trả món này.`)) return
@@ -242,7 +198,7 @@ export default function CheckoutPanel({
     setBusy(true)
     try {
       const inv = await checkoutApi.getLatestInvoice(table.id)
-      if (inv) printInvoiceHtml(inv)
+      if (inv) printPaymentInvoice(inv)
       else alert('Không tìm thấy hóa đơn gần nhất.')
     } catch (e) {
       alert(errMsg(e))
@@ -531,11 +487,21 @@ export default function CheckoutPanel({
         </div>
 
         {/* Tong tien */}
-        <div className="flex items-center justify-between border-t border-slate-200 pt-3">
-          <span className="text-sm text-slate-500">Tổng thanh toán</span>
-          <span className="text-xl font-semibold text-slate-900">
-            {finalTotal.toLocaleString('vi-VN')}đ
-          </span>
+        <div className="space-y-1.5 border-t border-slate-200 pt-3">
+          <div className="flex items-center justify-between text-sm text-slate-500">
+            <span>Tạm tính</span>
+            <span>{total.toLocaleString('vi-VN')}đ</span>
+          </div>
+          <div className="flex items-center justify-between text-sm text-slate-500">
+            <span>Thuế VAT</span>
+            <span>{vatTotal.toLocaleString('vi-VN')}đ</span>
+          </div>
+          <div className="flex items-center justify-between pt-1">
+            <span className="text-sm font-semibold text-slate-700">Tổng thanh toán</span>
+            <span className="text-xl font-semibold text-slate-900">
+              {finalTotal.toLocaleString('vi-VN')}đ
+            </span>
+          </div>
         </div>
 
         <ErrorText>{err}</ErrorText>

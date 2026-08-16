@@ -24,11 +24,22 @@ exports.sumOrderTotal = (client, tableId) =>
     )
     .then((r) => parseFloat(r.rows[0].total) || 0);
 
+exports.sumOrderVatTotal = (client, tableId) =>
+  client
+    .query(
+      `SELECT SUM(oi.unit_price * oi.quantity * (1 - oi.discount_percent / 100.0) * oi.vat_rate / 100.0) AS total
+       FROM orders o JOIN order_items oi ON o.order_id = oi.order_id
+       WHERE o.table_id = $1 AND o.status IN ${ACTIVE_STATUSES} AND ${BILLABLE}`,
+      [tableId]
+    )
+    .then((r) => parseFloat(r.rows[0].total) || 0);
+
 exports.fetchOrderItemsSnapshot = (client, tableId) =>
   client
     .query(
-      `SELECT mi.name, oi.quantity, oi.unit_price AS price, oi.discount_percent,
-              (oi.unit_price * oi.quantity * (1 - oi.discount_percent / 100.0)) AS line_total
+      `SELECT mi.name, oi.quantity, oi.unit_price AS price, oi.discount_percent, oi.vat_rate,
+              (oi.unit_price * oi.quantity * (1 - oi.discount_percent / 100.0)) AS line_total,
+              (oi.unit_price * oi.quantity * (1 - oi.discount_percent / 100.0) * oi.vat_rate / 100.0) AS vat_amount
        FROM orders o
        JOIN order_items oi ON o.order_id = oi.order_id
        JOIN menu_items mi ON oi.menu_item_id = mi.menu_item_id
@@ -42,12 +53,12 @@ exports.fetchKiemMonItems = (tableId) =>
   pool
     .query(
       `SELECT mi.name AS item_name, SUM(oi.quantity) AS quantity, oi.unit_price, oi.discount_percent,
-              SUM(oi.unit_price * oi.quantity * (1 - oi.discount_percent / 100.0)) AS line_total, mi.vat
+              SUM(oi.unit_price * oi.quantity * (1 - oi.discount_percent / 100.0)) AS line_total, oi.vat_rate AS vat
        FROM orders o
        JOIN order_items oi ON o.order_id = oi.order_id
        JOIN menu_items mi ON oi.menu_item_id = mi.menu_item_id
        WHERE o.table_id = $1 AND o.status IN ${ACTIVE_STATUSES} AND ${BILLABLE}
-       GROUP BY mi.name, oi.unit_price, oi.discount_percent, mi.vat
+       GROUP BY mi.name, oi.unit_price, oi.discount_percent, oi.vat_rate
        ORDER BY mi.name`,
       [tableId]
     )
@@ -231,6 +242,9 @@ exports.findInvoiceItems = (invoiceId) =>
         quantity: it.quantity,
         unit_price: it.price,
         total_price: it.line_total,
+        discount_percent: it.discount_percent,
+        vat_rate: it.vat_rate,
+        vat_amount: it.vat_amount,
       }));
     });
 

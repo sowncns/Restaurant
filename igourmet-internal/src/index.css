@@ -1,6 +1,10 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
 
+/* Tailwind v4 defaults dark: utilities to the OS preference. Keep the app's
+   existing class-based strategy so Windows dark mode cannot create a mixed UI. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   font-family: 'Inter', system-ui, sans-serif;
 }

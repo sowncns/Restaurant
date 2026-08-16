@@ -16,6 +16,8 @@ export interface OrderItem {
   unit_price: number
   total_price: number
   discount_percent?: number
+  vat_rate?: number
+  vat_amount?: number
   note?: string | null
   kitchen_status?: KitchenStatus
   is_mistake?: boolean

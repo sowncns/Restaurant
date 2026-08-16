@@ -9,7 +9,7 @@ const { addPointsAndProcessRank } = require("../profile/profile.service");
 const { redisClient } = require("../../../config/redis");
 const logger = require("../../../shared/utils/logger");
 const { AppError, BadRequest, NotFound, Conflict } = require("../../../shared/errors/AppError");
-const { sendMail } = require("../../../shared/utils/mail");
+const { sendVatInvoiceEmail } = require("../../../shared/services/vatInvoiceEmail.service");
 
 let _payos = null;
 function getPayOS() {
@@ -115,56 +115,7 @@ async function settleInvoicePayment(orderCode, paidAmount, isSuccess) {
     await redisClient.del(`table_voucher_${invoice.table_id}`);
     await redisClient.del(`checkout_intent_table_${invoice.table_id}`);
 
-    // Gui hoa don VAT qua email (neu phuc vu da nhap thong tin).
-    try {
-      const vatStr = await redisClient.get(`table_vat_${invoice.table_id}`);
-      if (vatStr) {
-        const vat = JSON.parse(vatStr);
-        if (vat.email) {
-          let items = invoice.items || [];
-          if (typeof items === "string") {
-            try {
-              items = JSON.parse(items);
-              if (typeof items === "string") items = JSON.parse(items);
-            } catch (e) {}
-          }
-          if (!Array.isArray(items)) items = [];
-          
-          const m = (n) => Number(n).toLocaleString("vi-VN");
-          const rows = items.map((it) =>
-            `<tr><td style="padding:6px 10px;border-bottom:1px solid #eee">${it.item_name || it.name || ''}</td>
-                <td style="padding:6px 10px;border-bottom:1px solid #eee;text-align:center">${it.quantity || 0}</td>
-                <td style="padding:6px 10px;border-bottom:1px solid #eee;text-align:right">${m(it.unit_price || it.price || 0)}đ</td>
-                <td style="padding:6px 10px;border-bottom:1px solid #eee;text-align:right">${m(it.total_price || it.line_total || 0)}đ</td>
-              </tr>`
-          ).join("");
-          const html = `<div style="font-family:system-ui,sans-serif;max-width:600px;margin:0 auto;color:#333">
-            <h2 style="text-align:center;color:#1e293b">HÓA ĐƠN GIÁ TRỊ GIA TĂNG</h2>
-            <p style="text-align:center;color:#64748b;font-size:14px">Mã HĐ: <b>${invoice.invoice_code}</b></p>
-            <hr style="border:none;border-top:1px solid #e2e8f0;margin:16px 0"/>
-            <p><b>Đơn vị:</b> ${vat.companyName || ""}</p>
-            <p><b>MST:</b> ${vat.taxCode || ""}</p>
-            <p><b>Địa chỉ:</b> ${vat.address || ""}</p>
-            <hr style="border:none;border-top:1px solid #e2e8f0;margin:16px 0"/>
-            <table style="width:100%;border-collapse:collapse;font-size:14px">
-              <thead><tr style="background:#f8fafc">
-                <th style="padding:8px 10px;text-align:left">Món</th>
-                <th style="padding:8px 10px;text-align:center">SL</th>
-                <th style="padding:8px 10px;text-align:right">Đơn giá</th>
-                <th style="padding:8px 10px;text-align:right">Thành tiền</th>
-              </tr></thead><tbody>${rows}</tbody>
-            </table>
-            <div style="text-align:right;margin-top:16px;font-size:18px;font-weight:700;color:#1e293b">Tổng: ${m(invoice.amount)}đ</div>
-            <p style="text-align:center;color:#94a3b8;font-size:12px;margin-top:24px">Cảm ơn quý khách đã sử dụng dịch vụ tại iGourmet.</p>
-          </div>`;
-          await sendMail(vat.email, `Hóa đơn VAT #${invoice.invoice_code} — iGourmet`, html);
-          await redisClient.del(`table_vat_${invoice.table_id}`);
-          logger.info({ email: vat.email, invoiceId: invoice.id }, "Đã gửi hóa đơn VAT qua email (payment callback)");
-        }
-      }
-    } catch (e) {
-      logger.error({ err: e, tableId: invoice.table_id }, "Lỗi gửi hóa đơn VAT qua email");
-    }
+    await sendVatInvoiceEmail({ tableId: invoice.table_id, invoiceId: invoice.id });
 
     if (invoice.customer_id) {
       pointsCustomerId = invoice.customer_id;

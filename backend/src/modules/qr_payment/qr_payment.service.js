@@ -13,6 +13,7 @@ const {
 const { BadRequest, NotFound } = require("../../shared/errors/AppError");
 const { genRedeemCode } = require("../../shared/utils/redeemCode");
 const logger = require("../../shared/utils/logger");
+const { sendVatInvoiceEmail } = require("../../shared/services/vatInvoiceEmail.service");
 
 const REQ_KEY = (id) => `qr_payment_req_id:${id}`;
 const PENDING_KEY = (cid) => `qr_payment_pending_cust:${cid}`;
@@ -70,6 +71,7 @@ async function settle(customerId, { amount, invoiceId, tableId, restaurantName }
 
 
   if (invoiceId) {
+    void sendVatInvoiceEmail({ tableId, invoiceId });
     try {
       await addPointsAndProcessRank(customerId, payAmount);
     } catch (e) {

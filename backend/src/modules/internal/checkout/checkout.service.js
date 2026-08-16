@@ -9,73 +9,10 @@ const { addPointsAndProcessRank } = require("../../customer/profile/profile.serv
 const { applyCashback } = require("../../../shared/services/cashback.service");
 const { BadRequest, NotFound } = require("../../../shared/errors/AppError");
 const logger = require("../../../shared/utils/logger");
-const { sendMail } = require("../../../shared/utils/mail");
+const { sendVatInvoiceEmail } = require("../../../shared/services/vatInvoiceEmail.service");
 
 function generateInvoiceCode() {
   return `INV-${Date.now()}-${Math.floor(Math.random() * 1000).toString().padStart(3, "0")}`;
-}
-
-const money = (n) => Number(n).toLocaleString("vi-VN");
-
-async function sendVatInvoiceEmail(tableId, invoice) {
-  try {
-    const vatStr = await redisClient.get(`table_vat_${tableId}`);
-    if (!vatStr) return;
-    const vat = JSON.parse(vatStr);
-    if (!vat.email) return;
-
-    let items = invoice.items || [];
-    if (typeof items === "string") {
-      try {
-        items = JSON.parse(items);
-        if (typeof items === "string") items = JSON.parse(items);
-      } catch (e) {}
-    }
-    if (!Array.isArray(items)) items = [];
-
-    const itemRows = items
-      .map(
-        (it) =>
-          `<tr><td style="padding:6px 10px;border-bottom:1px solid #eee">${it.item_name || it.name || ''}</td>
-              <td style="padding:6px 10px;border-bottom:1px solid #eee;text-align:center">${it.quantity || 0}</td>
-              <td style="padding:6px 10px;border-bottom:1px solid #eee;text-align:right">${money(it.unit_price || it.price || 0)}đ</td>
-              <td style="padding:6px 10px;border-bottom:1px solid #eee;text-align:right">${money(it.total_price || it.line_total || 0)}đ</td>
-            </tr>`,
-      )
-      .join("");
-
-    const html = `
-      <div style="font-family:system-ui,sans-serif;max-width:600px;margin:0 auto;color:#333">
-        <h2 style="text-align:center;color:#1e293b">HÓA ĐƠN GIÁ TRỊ GIA TĂNG</h2>
-        <p style="text-align:center;color:#64748b;font-size:14px">Mã HĐ: <b>${invoice.invoice_code}</b></p>
-        <hr style="border:none;border-top:1px solid #e2e8f0;margin:16px 0"/>
-        <p><b>Đơn vị:</b> ${vat.companyName || ""}</p>
-        <p><b>MST:</b> ${vat.taxCode || ""}</p>
-        <p><b>Địa chỉ:</b> ${vat.address || ""}</p>
-        <hr style="border:none;border-top:1px solid #e2e8f0;margin:16px 0"/>
-        <table style="width:100%;border-collapse:collapse;font-size:14px">
-          <thead><tr style="background:#f8fafc">
-            <th style="padding:8px 10px;text-align:left">Món</th>
-            <th style="padding:8px 10px;text-align:center">SL</th>
-            <th style="padding:8px 10px;text-align:right">Đơn giá</th>
-            <th style="padding:8px 10px;text-align:right">Thành tiền</th>
-          </tr></thead>
-          <tbody>${itemRows}</tbody>
-        </table>
-        <div style="text-align:right;margin-top:16px;font-size:18px;font-weight:700;color:#1e293b">
-          Tổng: ${money(invoice.amount)}đ
-        </div>
-        <p style="text-align:center;color:#94a3b8;font-size:12px;margin-top:24px">
-          Cảm ơn quý khách đã sử dụng dịch vụ tại iGourmet.
-        </p>
-      </div>`;
-
-    await sendMail(vat.email, `Hóa đơn VAT #${invoice.invoice_code} — iGourmet`, html);
-    await redisClient.del(`table_vat_${tableId}`);
-    logger.info({ email: vat.email, invoiceId: invoice.id }, "Đã gửi hóa đơn VAT qua email");
-  } catch (e) {
-    logger.error({ err: e, tableId }, "Lỗi gửi hóa đơn VAT qua email");
-  }
 }
 
 async function createInvoice(currentUser, tableId, paymentMethod, customerIdFromReq = null) {
@@ -98,8 +35,10 @@ async function createInvoice(currentUser, tableId, paymentMethod, customerIdFrom
     }
 
     // 2. Tong tien
-    let totalAmount = await repo.sumOrderTotal(client, tableId);
-    if (totalAmount <= 0) throw new BadRequest("Bàn chưa có món nào để thanh toán");
+    const subtotal = await repo.sumOrderTotal(client, tableId);
+    const vatAmount = await repo.sumOrderVatTotal(client, tableId);
+    let totalAmount = subtotal + vatAmount;
+    if (subtotal <= 0) throw new BadRequest("Bàn chưa có món nào để thanh toán");
 
     // 3. Voucher (tu Redis) + xac dinh khach hang
     let appliedCustomerVoucherId = null;
@@ -131,6 +70,9 @@ async function createInvoice(currentUser, tableId, paymentMethod, customerIdFrom
       }
       await repo.markDepositApplied(client, held.id);
     }
+
+    // VND has no fractional unit; keep invoice and payment gateway amounts identical.
+    totalAmount = Math.round(totalAmount);
 
     // 4. Snapshot mon an vao hoa don
     const itemsJson = JSON.stringify(await repo.fetchOrderItemsSnapshot(client, tableId));
@@ -231,7 +173,7 @@ async function createInvoice(currentUser, tableId, paymentMethod, customerIdFrom
       }
     }
 
-    void sendVatInvoiceEmail(tableId, invoice);
+    void sendVatInvoiceEmail({ tableId, invoice });
     return { message: "Thanh toán thành công. Bàn đang chờ xác nhận khách rời.", invoice, depositApplied };
   } catch (err) {
     await client.query("ROLLBACK");
@@ -550,6 +492,7 @@ async function listInvoices(currentUser, filters) {
 async function markInvoicePaid(invoiceId) {
   const inv = await repo.markInvoicePaid(invoiceId);
   if (inv.rowCount === 0) throw new NotFound("Không tìm thấy hóa đơn");
+  void sendVatInvoiceEmail({ invoiceId });
   return { message: "Đã cập nhật hóa đơn thành Đã thanh toán" };
 }
 
