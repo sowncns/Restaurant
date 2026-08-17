@@ -143,13 +143,24 @@ const Home = () => {
     { bg: 'bg-rose-100', color: 'text-rose-800' },
   ];
 
-  const MOCK_VOUCHERS = [
-    { id: 'v1', brand: 'ASANOHA', title: 'Giảm 20%', desc: 'Tối đa 100k', expiry: `${"Hết hạn trong"} 3 ${"ngày"}`, ...VOUCHER_THEMES[0] },
-    { id: 'v2', brand: 'SOM ตำ THAI', title: 'Tặng Món', desc: 'Gỏi đu đủ', expiry: `${"Hết hạn trong"} 5 ${"ngày"}`, ...VOUCHER_THEMES[1] },
-    { id: 'v3', brand: 'RAMEN ICHIBANKEN', title: 'Giảm 50K', desc: 'Đơn từ 300k', expiry: `${"Hết hạn trong"} 7 ${"ngày"}`, ...VOUCHER_THEMES[2] },
-  ];
+  const filteredVouchers = vouchers.filter(v => {
+    if (!v.type) return true;
+    const typeStr = String(v.type).toLowerCase();
+    return !typeStr.includes('delivery') && !typeStr.includes('giao');
+  });
 
-  const displayVouchers = vouchers.length > 0 ? vouchers.map((v, i) => {
+  const groupedVouchersMap = new Map<any, any[]>();
+  filteredVouchers.forEach(v => {
+    const templateId = v.voucher_template_id || v.name;
+    if (!groupedVouchersMap.has(templateId)) {
+      groupedVouchersMap.set(templateId, []);
+    }
+    groupedVouchersMap.get(templateId)!.push(v);
+  });
+  const groupedVouchers = Array.from(groupedVouchersMap.values());
+
+  const displayVouchers = groupedVouchers.map((group, i) => {
+    const v = group[0];
     const d = new Date(v.end_date);
     const formattedDate = `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()}`;
     return {
@@ -157,10 +168,11 @@ const Home = () => {
       brand: v.code || 'iGOURMET',
       title: v.name,
       desc: v.description,
-      expiry: `${"HSD:"} ${formattedDate}`,
+      expiry: `HSD: ${formattedDate}`,
+      count: group.length,
       ...VOUCHER_THEMES[i % VOUCHER_THEMES.length]
     };
-  }) : MOCK_VOUCHERS;
+  });
 
   return (
     <div className="space-y-12 pb-20 relative">
@@ -223,35 +235,44 @@ const Home = () => {
       </div>
 
       {/* Vouchers Section */}
-      <div>
-        <div className="flex justify-between items-end mb-6">
-          <h3 className="text-2xl font-bold text-gray-800">{"Voucher dành riêng bạn"}</h3>
-          <button onClick={openVoucherModal} className="text-primary hover:underline text-sm font-medium flex items-center">
-            {"Xem tất cả"} <ChevronRight className="w-4 h-4" />
-          </button>
-        </div>
-        <div ref={vouchersRef} className="flex overflow-x-auto gap-4 md:gap-6 pb-4 snap-x snap-mandatory hide-scrollbar scroll-smooth">
-          {displayVouchers.map((voucher, idx) => (
-            <div 
-              key={voucher.id || idx} 
-              onClick={openVoucherModal}
-              className={`w-full sm:w-[280px] md:w-[320px] snap-start ${voucher.bg} p-5 md:p-6 rounded-3xl relative overflow-hidden group cursor-pointer hover:shadow-lg transition-all shrink-0 flex-none`}
-            >
-              <Gift className="absolute -right-4 -bottom-4 w-24 h-24 md:w-32 md:h-32 opacity-10 transform group-hover:scale-110 group-hover:rotate-12 transition-transform duration-500" />
-              <div className="relative z-10 flex flex-col h-full justify-between">
-                <div>
-                  <span className={`text-xs md:text-sm font-bold tracking-wider ${voucher.color} opacity-80 uppercase line-clamp-1`}>{voucher.brand}</span>
-                  <h4 className={`text-xl md:text-3xl font-extrabold mt-1 md:mt-2 mb-1 ${voucher.color} line-clamp-2`}>{voucher.title}</h4>
-                  <p className={`text-sm md:text-base ${voucher.color} font-medium mb-3 md:mb-4 line-clamp-2`}>{voucher.desc}</p>
-                </div>
-                <div className="inline-block bg-white/40 px-2.5 py-1 md:px-3 rounded-full text-[10px] md:text-xs font-semibold text-gray-800 backdrop-blur-sm self-start mt-2">
-                  {voucher.expiry}
+      {displayVouchers.length > 0 && (
+        <div className="mb-4">
+          <div className="flex justify-between items-end mb-6">
+            <h3 className="text-2xl font-bold text-gray-800">{"Voucher dành riêng bạn"}</h3>
+            <button onClick={openVoucherModal} className="text-primary hover:underline text-sm font-medium flex items-center">
+              {"Xem tất cả"} <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+          <div ref={vouchersRef} className="flex overflow-x-auto gap-4 md:gap-6 pb-4 snap-x snap-mandatory hide-scrollbar scroll-smooth">
+            {displayVouchers.map((voucher, idx) => (
+              <div 
+                key={voucher.id || idx} 
+                onClick={openVoucherModal}
+                className={`w-full sm:w-[280px] md:w-[320px] snap-start ${voucher.bg} p-5 md:p-6 rounded-3xl relative overflow-hidden group cursor-pointer hover:shadow-lg transition-all shrink-0 flex-none`}
+              >
+                <Gift className="absolute -right-4 -bottom-4 w-24 h-24 md:w-32 md:h-32 opacity-10 transform group-hover:scale-110 group-hover:rotate-12 transition-transform duration-500" />
+                <div className="relative z-10 flex flex-col h-full justify-between">
+                  <div>
+                    <span className={`text-xs md:text-sm font-bold tracking-wider ${voucher.color} opacity-80 uppercase line-clamp-1`}>{voucher.brand}</span>
+                    <div className="flex items-start gap-2 mt-1 md:mt-2 mb-1">
+                      <h4 className={`text-xl md:text-3xl font-extrabold ${voucher.color} line-clamp-2`}>{voucher.title}</h4>
+                      {voucher.count > 1 && (
+                        <span className="bg-[#00a662] text-white text-[10px] md:text-xs font-bold px-2 py-0.5 rounded-full mt-1 shrink-0">
+                          x{voucher.count}
+                        </span>
+                      )}
+                    </div>
+                    <p className={`text-sm md:text-base ${voucher.color} font-medium mb-3 md:mb-4 line-clamp-2`}>{voucher.desc}</p>
+                  </div>
+                  <div className="inline-block bg-white/40 px-2.5 py-1 md:px-3 rounded-full text-[10px] md:text-xs font-semibold text-gray-800 backdrop-blur-sm self-start mt-2">
+                    {voucher.expiry}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Food Promos */}
       <div>

@@ -126,6 +126,17 @@ const VoucherModal = ({ isOpen, onClose }: VoucherModalProps) => {
     return !typeStr.includes('delivery') && !typeStr.includes('giao');
   });
 
+  // Group vouchers by voucher_template_id
+  const groupedVouchersMap = new Map<number, Voucher[]>();
+  filteredVouchers.forEach(v => {
+    const templateId = (v as any).voucher_template_id || v.name; // Fallback to name if template_id is missing
+    if (!groupedVouchersMap.has(templateId)) {
+      groupedVouchersMap.set(templateId, []);
+    }
+    groupedVouchersMap.get(templateId)!.push(v);
+  });
+  const groupedVouchers = Array.from(groupedVouchersMap.values());
+
   return (
     <div className="fixed inset-0 z-30 flex items-center justify-center p-0 md:p-4">
       <div 
@@ -157,7 +168,7 @@ const VoucherModal = ({ isOpen, onClose }: VoucherModalProps) => {
               <AlertCircle className="w-16 h-16 text-gray-300 mb-4" />
               <p className="text-lg">{error}</p>
             </div>
-          ) : filteredVouchers.length === 0 ? (
+          ) : groupedVouchers.length === 0 ? (
             <div className="bg-white rounded-3xl p-16 text-center text-gray-500 flex flex-col items-center shadow-sm border border-gray-100">
               <Gift className="w-24 h-24 text-gray-200 mb-6" />
               <p className="font-semibold text-xl text-gray-700">Bạn chưa có voucher nào</p>
@@ -165,36 +176,47 @@ const VoucherModal = ({ isOpen, onClose }: VoucherModalProps) => {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4 md:gap-8">
-              {filteredVouchers.map((v, idx) => (
-                <div key={v.customer_voucher_id} className="group cursor-pointer" onClick={() => openVoucher(v)}>
-                  <div className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all border border-gray-100 relative h-[180px] md:h-[220px]">
-                    <img 
-                      src={DEFAULT_IMAGES[idx % DEFAULT_IMAGES.length]} 
-                      alt={v.name} 
-                      className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent flex flex-col justify-center p-4 md:p-8">
-                      <h3 className="text-white font-extrabold text-2xl sm:text-3xl md:text-4xl leading-tight mb-1 md:mb-2 max-w-[90%] md:max-w-[80%]">
-                        {v.name}
-                      </h3>
-                      <p className="text-gray-200 font-medium text-xs md:text-sm max-w-[90%] md:max-w-[80%] line-clamp-2">
-                        {v.description}
-                      </p>
+              {groupedVouchers.map((group, idx) => {
+                const v = group[0];
+                const count = group.length;
+                return (
+                  <div key={v.customer_voucher_id} className="group cursor-pointer" onClick={() => openVoucher(v)}>
+                    <div className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all border border-gray-100 relative h-[180px] md:h-[220px]">
+                      <img 
+                        src={DEFAULT_IMAGES[idx % DEFAULT_IMAGES.length]} 
+                        alt={v.name} 
+                        className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent flex flex-col justify-center p-4 md:p-8">
+                        <div className="flex items-start gap-2 mb-1 md:mb-2 max-w-[90%] md:max-w-[80%]">
+                          <h3 className="text-white font-extrabold text-2xl sm:text-3xl md:text-4xl leading-tight">
+                            {v.name}
+                          </h3>
+                          {count > 1 && (
+                            <span className="bg-[#00a662] text-white text-xs font-bold px-2 py-1 rounded-full mt-1">
+                              x{count}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-gray-200 font-medium text-xs md:text-sm max-w-[90%] md:max-w-[80%] line-clamp-2">
+                          {v.description}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="mt-3 md:mt-4 flex items-center justify-between px-1 md:px-2">
+                      <span className="text-gray-600 md:text-gray-700 font-medium text-sm md:text-lg">
+                        Hạn sử dụng: {formatDate(v.end_date)}
+                      </span>
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); openVoucher(v); }}
+                        className="text-[#00a662] font-bold text-sm md:text-base hover:underline opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        Dùng ngay
+                      </button>
                     </div>
                   </div>
-                  <div className="mt-3 md:mt-4 flex items-center justify-between px-1 md:px-2">
-                    <span className="text-gray-600 md:text-gray-700 font-medium text-sm md:text-lg">
-                      Hạn sử dụng: {formatDate(v.end_date)}
-                    </span>
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); openVoucher(v); }}
-                      className="text-[#00a662] font-bold text-sm md:text-base hover:underline opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      Dùng ngay
-                    </button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
