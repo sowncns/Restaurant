@@ -179,29 +179,62 @@ const VoucherModal = ({ isOpen, onClose }: VoucherModalProps) => {
               {groupedVouchers.map((group, idx) => {
                 const v = group[0];
                 const count = group.length;
+                const VOUCHER_THEMES = [
+                  { bg: 'bg-yellow-100', color: 'text-yellow-800' },
+                  { bg: 'bg-green-100', color: 'text-green-800' },
+                  { bg: 'bg-orange-100', color: 'text-orange-800' },
+                  { bg: 'bg-blue-100', color: 'text-blue-800' },
+                  { bg: 'bg-rose-100', color: 'text-rose-800' },
+                ];
+                const theme = VOUCHER_THEMES[idx % VOUCHER_THEMES.length];
+                const hasImage = !!(v as any).image_url;
+
                 return (
                   <div key={v.customer_voucher_id} className="group cursor-pointer" onClick={() => openVoucher(v)}>
-                    <div className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all border border-gray-100 relative h-[180px] md:h-[220px]">
-                      <img 
-                        src={DEFAULT_IMAGES[idx % DEFAULT_IMAGES.length]} 
-                        alt={v.name} 
-                        className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent flex flex-col justify-center p-4 md:p-8">
-                        <div className="flex items-start gap-2 mb-1 md:mb-2 max-w-[90%] md:max-w-[80%]">
-                          <h3 className="text-white font-extrabold text-2xl sm:text-3xl md:text-4xl leading-tight">
-                            {v.name}
-                          </h3>
-                          {count > 1 && (
-                            <span className="bg-[#00a662] text-white text-xs font-bold px-2 py-1 rounded-full mt-1">
-                              x{count}
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-gray-200 font-medium text-xs md:text-sm max-w-[90%] md:max-w-[80%] line-clamp-2">
-                          {v.description}
-                        </p>
-                      </div>
+                    <div className={`rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all border border-gray-100 relative h-[180px] md:h-[220px] ${hasImage ? 'bg-black' : theme.bg}`}>
+                      {hasImage ? (
+                        <>
+                          <img 
+                            src={(v as any).image_url} 
+                            alt={v.name} 
+                            className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent flex flex-col justify-center p-4 md:p-8">
+                            <div className="flex items-start gap-2 mb-1 md:mb-2 max-w-[90%] md:max-w-[80%]">
+                              <h3 className="text-white font-extrabold text-2xl sm:text-3xl md:text-4xl leading-tight">
+                                {v.name}
+                              </h3>
+                              {count > 1 && (
+                                <span className="bg-[#00a662] text-white text-xs font-bold px-2 py-1 rounded-full mt-1 shrink-0">
+                                  x{count}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-gray-200 font-medium text-xs md:text-sm max-w-[90%] md:max-w-[80%] line-clamp-2">
+                              {v.description}
+                            </p>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <Gift className="absolute -right-4 -bottom-4 w-32 h-32 md:w-48 md:h-48 opacity-10 transform group-hover:scale-110 group-hover:rotate-12 transition-transform duration-500" />
+                          <div className="relative z-10 flex flex-col justify-center h-full p-4 md:p-8">
+                            <div className="flex items-start gap-2 mb-1 md:mb-2 max-w-[90%] md:max-w-[80%]">
+                              <h3 className={`${theme.color} font-extrabold text-2xl sm:text-3xl md:text-4xl leading-tight`}>
+                                {v.name}
+                              </h3>
+                              {count > 1 && (
+                                <span className="bg-[#00a662] text-white text-xs font-bold px-2 py-1 rounded-full mt-1 shrink-0">
+                                  x{count}
+                                </span>
+                              )}
+                            </div>
+                            <p className={`${theme.color} font-medium text-xs md:text-sm max-w-[90%] md:max-w-[80%] line-clamp-2`}>
+                              {v.description}
+                            </p>
+                          </div>
+                        </>
+                      )}
                     </div>
                     <div className="mt-3 md:mt-4 flex items-center justify-between px-1 md:px-2">
                       <span className="text-gray-600 md:text-gray-700 font-medium text-sm md:text-lg">

@@ -98,7 +98,7 @@ const Home = () => {
       }
     };
     fetchVouchers();
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     const listTimer = setInterval(() => {
@@ -170,6 +170,7 @@ const Home = () => {
       desc: v.description,
       expiry: `HSD: ${formattedDate}`,
       count: group.length,
+      image: v.image_url,
       ...VOUCHER_THEMES[i % VOUCHER_THEMES.length]
     };
   });
@@ -248,23 +249,30 @@ const Home = () => {
               <div 
                 key={voucher.id || idx} 
                 onClick={openVoucherModal}
-                className={`w-full sm:w-[280px] md:w-[320px] snap-start ${voucher.bg} p-5 md:p-6 rounded-3xl relative overflow-hidden group cursor-pointer hover:shadow-lg transition-all shrink-0 flex-none`}
+                className={`w-full sm:w-[280px] md:w-[320px] snap-start ${voucher.bg} rounded-3xl relative overflow-hidden group cursor-pointer hover:shadow-lg transition-all shrink-0 flex-none min-h-[160px] md:min-h-[180px]`}
               >
-                <Gift className="absolute -right-4 -bottom-4 w-24 h-24 md:w-32 md:h-32 opacity-10 transform group-hover:scale-110 group-hover:rotate-12 transition-transform duration-500" />
-                <div className="relative z-10 flex flex-col h-full justify-between">
+                {voucher.image ? (
+                  <>
+                    <img src={voucher.image} alt={voucher.title} className="absolute inset-0 w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent"></div>
+                  </>
+                ) : (
+                  <Gift className="absolute -right-4 -bottom-4 w-24 h-24 md:w-32 md:h-32 opacity-10 transform group-hover:scale-110 group-hover:rotate-12 transition-transform duration-500" />
+                )}
+                <div className="relative z-10 flex flex-col h-full justify-between p-5 md:p-6">
                   <div>
-                    <span className={`text-xs md:text-sm font-bold tracking-wider ${voucher.color} opacity-80 uppercase line-clamp-1`}>{voucher.brand}</span>
+                    <span className={`text-xs md:text-sm font-bold tracking-wider ${voucher.image ? 'text-white' : voucher.color} opacity-80 uppercase line-clamp-1`}>{voucher.brand}</span>
                     <div className="flex items-start gap-2 mt-1 md:mt-2 mb-1">
-                      <h4 className={`text-xl md:text-3xl font-extrabold ${voucher.color} line-clamp-2`}>{voucher.title}</h4>
+                      <h4 className={`text-xl md:text-3xl font-extrabold ${voucher.image ? 'text-white' : voucher.color} line-clamp-2`}>{voucher.title}</h4>
                       {voucher.count > 1 && (
                         <span className="bg-[#00a662] text-white text-[10px] md:text-xs font-bold px-2 py-0.5 rounded-full mt-1 shrink-0">
                           x{voucher.count}
                         </span>
                       )}
                     </div>
-                    <p className={`text-sm md:text-base ${voucher.color} font-medium mb-3 md:mb-4 line-clamp-2`}>{voucher.desc}</p>
+                    <p className={`text-sm md:text-base ${voucher.image ? 'text-gray-200' : voucher.color} font-medium mb-3 md:mb-4 line-clamp-2`}>{voucher.desc}</p>
                   </div>
-                  <div className="inline-block bg-white/40 px-2.5 py-1 md:px-3 rounded-full text-[10px] md:text-xs font-semibold text-gray-800 backdrop-blur-sm self-start mt-2">
+                  <div className={`inline-block ${voucher.image ? 'bg-white/20 text-white' : 'bg-white/40 text-gray-800'} px-2.5 py-1 md:px-3 rounded-full text-[10px] md:text-xs font-semibold backdrop-blur-sm self-start mt-2`}>
                     {voucher.expiry}
                   </div>
                 </div>

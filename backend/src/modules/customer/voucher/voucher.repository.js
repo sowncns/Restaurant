@@ -9,7 +9,7 @@ exports.findUsableByCustomer = (customerId) =>
               vt.voucher_template_id, vt.code, vt.name, vt.name_en,
               vt.description, vt.description_en, vt.discount_type, vt.discount_value,
               vt.min_order_amount, vt.max_discount_amount, vt.start_date, vt.end_date,
-              vt.apply_scope, vt.type
+              vt.apply_scope, vt.type, vt.image_url
        FROM customer_vouchers cv
        JOIN voucher_templates vt ON cv.voucher_template_id = vt.voucher_template_id
        WHERE cv.customer_id = $1
