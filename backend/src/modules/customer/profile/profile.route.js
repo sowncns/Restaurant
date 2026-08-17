@@ -7,8 +7,9 @@ const {
   requirePaymentPin,
 } = require("../../../shared/middlewares/auth.middleware");
 const { validate } = require("../../../shared/middlewares/validate.middleware");
-const { updateProfileSchema, pinSchema, addPointsSchema } = require("./profile.schema");
-
+const { updateProfileSchema, pinSchema, resetPinSchema, addPointsSchema } = require("./profile.schema");
+const { authorize } = require("../../../shared/middlewares/role.middleware");
+const managerOnly = authorize("SUPER_ADMIN", "COMPANY_ADMIN", "BRANCH_MANAGER");
 const router = express.Router();
 
 router.use(requireAuth); // tat ca route profile deu can dang nhap
@@ -23,6 +24,6 @@ router.get("/transactions", requirePaymentPin, controller.getTransactions);
 // Thao tac: yeu cau da xac thuc email
 router.put("/me", requireVerifiedEmail, validate(updateProfileSchema), controller.updateProfile);
 router.post("/setup-pin", requireVerifiedEmail, validate(pinSchema), controller.setupPin);
-router.post("/add-points", requireVerifiedEmail, validate(addPointsSchema), controller.addPoints);
-
+// router.post("/add-points", requireVerifiedEmail, managerOnly,validate(addPointsSchema), controller.addPoints);
+router.post("/reset-pin-by-password", requireVerifiedEmail, validate(resetPinSchema), controller.resetPinByPassword);
 module.exports = router;

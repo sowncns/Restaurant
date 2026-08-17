@@ -27,7 +27,12 @@ exports.verifyPin = asyncHandler(async (req, res) => {
   res.json({ message: "Xác thực PIN thành công", isValid });
 });
 
-exports.addPoints = asyncHandler(async (req, res) => {
-  const profile = await service.addPointsAndProcessRank(req.user.id, req.body.points);
-  res.json({ message: "Cập nhật điểm thành công", profile });
+// exports.addPoints = asyncHandler(async (req, res) => {
+//   const profile = await service.addPointsAndProcessRank(req.user.id, req.body.points);
+//   res.json({ message: "Cập nhật điểm thành công", profile });
+// });
+
+exports.resetPinByPassword = asyncHandler(async (req, res) => {
+  const result = await service.resetPinWithPassword(req.user.id, req.body.password, req.body.newPin);
+  res.json(result);
 });

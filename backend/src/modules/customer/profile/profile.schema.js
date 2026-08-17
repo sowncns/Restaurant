@@ -13,8 +13,12 @@ const pinSchema = z.object({
   pin: z.string().length(6, "Mã PIN phải gồm đúng 6 số"),
 });
 
-const addPointsSchema = z.object({
-  points: z.coerce.number().int().positive("Số điểm phải là số nguyên dương"),
+// const addPointsSchema = z.object({
+//   points: z.coerce.number().int().positive("Số điểm phải là số nguyên dương"),
+// });
+const resetPinSchema = z.object({
+  password: z.string().min(1, "Vui lòng nhập mật khẩu"),
+  newPin: z.string().length(6, "Mã PIN phải gồm đúng 6 số"),
 });
 
-module.exports = { updateProfileSchema, pinSchema, addPointsSchema };
+module.exports = { updateProfileSchema, pinSchema, resetPinSchema };

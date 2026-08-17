@@ -86,3 +86,8 @@ exports.updateRankPoints = (client, customerId, points, rank, rankExpiredAt) =>
       [points, rank, rankExpiredAt, customerId]
     )
     .then((r) => r.rows[0]);
+// ---- Quen PIN thanh toan bang mat khau ----
+exports.getPassword = (customerId) =>
+  pool
+    .query("SELECT password FROM customers WHERE customer_id = $1", [customerId])
+    .then((r) => r.rows[0]);

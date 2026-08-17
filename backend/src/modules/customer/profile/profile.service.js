@@ -4,6 +4,7 @@ const repo = require("./profile.repository");
 const pool = require("../../../config/db");
 const { NotFound, BadRequest, Forbidden } = require("../../../shared/errors/AppError");
 
+
 const YEAR_MS = 365 * 24 * 60 * 60 * 1000;
 const SILVER_THRESHOLD = 10000000;
 const GOLD_THRESHOLD = 30000000;
@@ -34,7 +35,7 @@ exports.updateAddressByCustomerId = async (customerId, address) => {
 
 exports.getTransactionHistory = (customerId) => repo.getTransactionHistory(customerId);
 
-// Ham thuan: tinh diem/hang moi (khong dung DB) -> de doc, de test
+
 function computeRank(customer, pointsToAdd) {
   let rank = customer.rank || "normal";
   let points = parseInt(customer.points, 10) || 0;
@@ -55,7 +56,7 @@ function computeRank(customer, pointsToAdd) {
 
   points += pointsToAdd;
 
-  // Thang hang (ladder: normal -> silver -> gold -> platinum, reset diem khi len hang)
+
   const promote = (newRank) => { rank = newRank; points = 0; rankExpiredAt = new Date(Date.now() + YEAR_MS); };
   if (rank === "normal") {
     if (points >= PLATINUM_THRESHOLD) promote("platinum");
@@ -92,8 +93,7 @@ exports.addPointsAndProcessRank = async (customerId, pointsToAdd) => {
   }
 };
 
-// Set diem TUYET DOI (dung cho admin chinh/test) roi tinh lai hang. Tai dung computeRank
-// bang cach ghi de points hien tai va cong them 0.
+
 exports.setPointsAndProcessRank = async (customerId, absolutePoints) => {
   const client = await pool.connect();
   try {
@@ -145,4 +145,27 @@ exports.verifyPaymentPin = async (customerId, pin) => {
     throw new Forbidden("Bạn đã nhập sai 5 lần. Tính năng thanh toán bị khóa trong 1 giờ.");
   }
   throw new BadRequest(`Mã PIN sai. Bạn còn ${5 - attempts} lần thử.`);
+};
+
+exports.resetPinWithPassword = async (customerId, password, newPin) => {
+  if (!password) throw new BadRequest("Vui lòng nhập mật khẩu");
+  if (!newPin || newPin.length !== 6) throw new BadRequest("Mã PIN phải bao gồm 6 số");
+
+  const profile = await repo.getProfile(customerId);
+  if (!profile) throw new NotFound("Không tìm thấy khách hàng");
+  if (!profile.has_payment_pin) {
+    throw new BadRequest("Tài khoản chưa thiết lập mã PIN");
+  }
+
+  const pwInfo = await repo.getPassword(customerId);
+  if (!pwInfo || !pwInfo.password) throw new BadRequest("Không tìm thấy mật khẩu");
+
+  const isValidPassword = await bcrypt.compare(password, pwInfo.password);
+  if (!isValidPassword) throw new BadRequest("Mật khẩu không đúng");
+
+  const hashedPin = await bcrypt.hash(newPin, 10);
+  await repo.setPin(customerId, hashedPin);
+  await repo.resetPinAttempts(customerId);
+
+  return { message: "Đặt lại mã PIN thành công" };
 };
