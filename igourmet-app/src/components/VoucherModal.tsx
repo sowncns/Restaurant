@@ -23,12 +23,12 @@ interface VoucherModalProps {
   onClose: () => void;
 }
 
-const DEFAULT_IMAGES = [
-  'https://images.unsplash.com/photo-1615361200141-f45040f367be?auto=format&fit=crop&q=80&w=800&h=400',
-  'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&q=80&w=800&h=400',
-  'https://images.unsplash.com/photo-1544025162-831e7fce95af?auto=format&fit=crop&q=80&w=800&h=400',
-  'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&q=80&w=800&h=400',
-];
+// const DEFAULT_IMAGES = [
+//   'https://images.unsplash.com/photo-1615361200141-f45040f367be?auto=format&fit=crop&q=80&w=800&h=400',
+//   'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&q=80&w=800&h=400',
+//   'https://images.unsplash.com/photo-1544025162-831e7fce95af?auto=format&fit=crop&q=80&w=800&h=400',
+//   'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&q=80&w=800&h=400',
+// ];
 
 const VoucherModal = ({ isOpen, onClose }: VoucherModalProps) => {
   const [vouchers, setVouchers] = useState<Voucher[]>([]);
