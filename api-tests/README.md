@@ -49,6 +49,15 @@ $env:API_DESTRUCTIVE = "1"
 pytest -m destructive
 ```
 
+Run the two complete acceptance workflows against the local backend and fake email provider:
+
+```powershell
+$env:API_DESTRUCTIVE = "1"
+powershell -ExecutionPolicy Bypass -File run-local.ps1 -Markers business_flow `
+  -Report reports/business-flows.xml `
+  -HtmlReport reports/business-flows.html
+```
+
 Both the `destructive` marker selection and `API_DESTRUCTIVE=1` are required. If destructive tests are selected without the gate, they skip before fixture setup. Required stable IDs are documented in `.env.example`.
 
 ## Coverage

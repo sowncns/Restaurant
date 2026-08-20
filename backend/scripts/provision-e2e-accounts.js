@@ -13,7 +13,7 @@ if (!PASSWORD || PASSWORD.length < 10) {
 const employees = [
   ["e2e_reception", "Selenium Receptionist", "RECEPTIONIST", COMPANY_ID, BRANCH_ID, null],
   ["e2e_waiter", "Selenium Waiter", "WAITER", COMPANY_ID, BRANCH_ID, null],
-  ["e2e_kitchen", "Selenium Kitchen", "KITCHEN", COMPANY_ID, BRANCH_ID, "HOT_KITCHEN"],
+  ["e2e_kitchen", "Selenium Kitchen", "KITCHEN", COMPANY_ID, BRANCH_ID, "MENU_ITEM"],
   ["e2e_cashier", "Selenium Cashier", "CASHIER", COMPANY_ID, BRANCH_ID, null],
   ["e2e_manager", "Selenium Branch Manager", "BRANCH_MANAGER", COMPANY_ID, BRANCH_ID, null],
   ["e2e_company_admin", "Selenium Company Admin", "COMPANY_ADMIN", COMPANY_ID, null, null],
@@ -34,10 +34,12 @@ const employees = [
 
     let kitchenTypeId = null;
     if (kitchenCode) {
-      let kitchen = await pool.query(
-        "SELECT kitchen_type_id FROM kitchen_types WHERE code = $1 AND status = 'active'",
-        [kitchenCode],
-      );
+      let kitchen = kitchenCode === "MENU_ITEM"
+        ? await pool.query("SELECT kitchen_type_id FROM menu_items WHERE menu_item_id = 2")
+        : await pool.query(
+          "SELECT kitchen_type_id FROM kitchen_types WHERE code = $1 AND status = 'active'",
+          [kitchenCode],
+        );
       if (!kitchen.rowCount) {
         kitchen = await pool.query(
           "SELECT kitchen_type_id FROM kitchen_types WHERE status = 'active' ORDER BY kitchen_type_id LIMIT 1",

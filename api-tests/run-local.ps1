@@ -1,3 +1,9 @@
+param(
+  [string]$Markers = 'not destructive',
+  [string]$Report = 'reports/junit.xml',
+  [string]$HtmlReport = 'reports/report.html'
+)
+
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
 $temp = Join-Path $env:TEMP 'igourmet-api-tests'
@@ -35,7 +41,8 @@ try {
   }
   if (!$ready) { throw 'Backend did not become ready within 180 seconds' }
 
-  & (Join-Path $PSScriptRoot '.venv\Scripts\python.exe') -m pytest --junitxml=reports/junit.xml
+  & (Join-Path $PSScriptRoot '.venv\Scripts\python.exe') -m pytest -m $Markers `
+    --junitxml=$Report --html=$HtmlReport --self-contained-html
   if ($LASTEXITCODE -ne 0) { throw "pytest exited with code $LASTEXITCODE" }
 } finally {
   if (!$backend.HasExited) {
