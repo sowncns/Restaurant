@@ -45,8 +45,13 @@ export default function CancelRequestsPage() {
     }
   }
 
-  async function reject(id: number) {
-    const note = window.prompt('Lý do từ chối (vd: đã nấu xong):', 'Món đã nấu')
+  async function reject(id: number, isCombo: boolean) {
+    const note = window.prompt(
+      isCombo
+        ? 'Combo đã bắt đầu làm. Bấm OK → các món con sẽ tách ra thành món lẻ, tiếp tục phục vụ.\nNhập lý do để hiển thị trên từng món con:'
+        : 'Lý do từ chối (vd: đã nấu xong):',
+      isCombo ? 'Combo bị hủy — phục vụ lẻ từng món' : 'Món đã nấu'
+    )
     if (note === null) return
     setBusyId(id)
     setErr('')
@@ -78,50 +83,64 @@ export default function CancelRequestsPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {rows.map((r) => (
-            <div key={r.cancel_request_id} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-              <div className="flex items-start justify-between gap-2">
-                <div>
-                  <div className="flex items-center gap-2 text-base font-semibold text-slate-900">
-                    {r.item_name} <span className="text-slate-400">× {r.requested_qty}</span>
-                    {r.kitchen_type_name && (
-                      <Badge className="bg-slate-100 text-slate-600">{r.kitchen_type_name}</Badge>
-                    )}
+          {rows.map((r) => {
+            const isCombo = !!(r as any).is_combo_parent
+            return (
+              <div
+                key={r.cancel_request_id}
+                className={`rounded-xl border bg-white p-4 shadow-sm ${isCombo ? 'border-orange-300' : 'border-slate-200'}`}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-1.5 text-base font-semibold text-slate-900">
+                      {isCombo && <Badge className="bg-orange-100 text-orange-700">COMBO</Badge>}
+                      <span className="truncate">{r.item_name}</span>
+                      <span className="text-slate-400 shrink-0">× {r.requested_qty}</span>
+                      {r.kitchen_type_name && (
+                        <Badge className="bg-slate-100 text-slate-600">{r.kitchen_type_name}</Badge>
+                      )}
+                    </div>
+                    <div className="text-xs text-slate-500 mt-0.5">
+                      {r.table_number} · {r.order_code}
+                    </div>
                   </div>
-                  <div className="text-xs text-slate-500">
-                    {r.table_name || r.table_number} · {r.order_code}
-                  </div>
+                  <Badge className="bg-amber-100 text-amber-700 shrink-0">
+                    <Clock size={11} className="mr-1 inline" /> {r.current_kitchen_status}
+                  </Badge>
                 </div>
-                <Badge className="bg-amber-100 text-amber-700">
-                  <Clock size={11} className="mr-1 inline" /> {r.current_kitchen_status}
-                </Badge>
-              </div>
 
-              <div className="mt-2 text-sm text-slate-700">
-                Lý do: <span className="font-medium">{reasonLabel[r.reason_code]}</span>
-                {r.reason_note && <span className="text-slate-500"> — {r.reason_note}</span>}
-              </div>
-              <div className="text-xs text-slate-400">Phục vụ: {r.requested_by_name ?? '—'}</div>
+                {isCombo && (
+                  <div className="mt-2 rounded-lg bg-orange-50 border border-orange-200 px-3 py-1.5 text-xs text-orange-800">
+                    ⚠ Các món trong combo đã bắt đầu nấu. "Đã làm rồi" → tách từng món thành món lẻ, không hủy.
+                  </div>
+                )}
 
-              <div className="mt-3 flex gap-2">
-                <Button
-                  className="flex-1"
-                  disabled={busyId === r.cancel_request_id}
-                  onClick={() => accept(r.cancel_request_id)}
-                >
-                  <Check size={15} /> Chấp nhận hủy
-                </Button>
-                <Button
-                  variant="secondary"
-                  className="flex-1"
-                  disabled={busyId === r.cancel_request_id}
-                  onClick={() => reject(r.cancel_request_id)}
-                >
-                  <X size={15} /> Đã làm rồi
-                </Button>
+                <div className="mt-2 text-sm text-slate-700">
+                  Lý do: <span className="font-medium">{reasonLabel[r.reason_code]}</span>
+                  {r.reason_note && <span className="text-slate-500"> — {r.reason_note}</span>}
+                </div>
+                <div className="text-xs text-slate-400">Phục vụ: {r.requested_by_name ?? '—'}</div>
+
+                <div className="mt-3 flex gap-2">
+                  <Button
+                    className="flex-1"
+                    disabled={busyId === r.cancel_request_id}
+                    onClick={() => accept(r.cancel_request_id)}
+                  >
+                    <Check size={15} /> Chấp nhận hủy
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    className="flex-1"
+                    disabled={busyId === r.cancel_request_id}
+                    onClick={() => reject(r.cancel_request_id, isCombo)}
+                  >
+                    <X size={15} /> {isCombo ? 'Đã làm (tách lẻ)' : 'Đã làm rồi'}
+                  </Button>
+                </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
     </div>

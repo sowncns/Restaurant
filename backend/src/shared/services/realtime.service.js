@@ -36,10 +36,15 @@ function start() {
         if (branchId == null) return;
         events.emit(`${table}:${branchId}`, { type: payload.eventType, row });
       })
-      .subscribe();
+      .subscribe((status, error) => {
+        if (status === "SUBSCRIBED") {
+          logger.info({ table }, "Supabase Realtime da subscribe");
+        } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+          logger.error({ table, status, error }, "Supabase Realtime subscribe that bai");
+        }
+      });
     channels.push(channel);
   }
-  logger.info({ tables: TABLES }, "Supabase Realtime da subscribe");
 }
 
 function stop() {

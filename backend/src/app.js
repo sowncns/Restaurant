@@ -21,8 +21,8 @@ app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
 app.use(cors({ origin: allowedOrigins, credentials: true }));
 app.use(express.json({ limit: "1mb" }));
 app.use(cookieParser());
-app.use(pinoHttp({ logger }));
-app.use(generalLimiter);
+// app.use(pinoHttp({ logger }));
+// app.use(generalLimiter);
 
 app.get("/health", (req, res) => res.json({ status: "ok" }));
 

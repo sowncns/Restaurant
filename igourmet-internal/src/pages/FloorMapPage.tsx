@@ -775,7 +775,7 @@ function TableActionModal({
 
   const releaseTable = async () => {
     if (!canReleaseTable) return
-    if (!window.confirm(`Xác nhận khách đã rời bàn ${table.table_name || table.table_number}?`)) return
+    if (!window.confirm(`Xác nhận khách đã rời bàn ${table.table_number}?`)) return
     setBusy(true)
     try {
       await tablesApi.changeStatus(table.id, 'AVAILABLE')

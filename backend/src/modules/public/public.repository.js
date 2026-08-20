@@ -74,6 +74,17 @@ exports.listMenuItemsByCompany = (companyId) =>
     )
     .then((r) => r.rows);
 
+exports.listCombosByCompany = (companyId) =>
+  pool
+    .query(
+      `SELECT combo_id AS id, name, description, image_url, price, status
+       FROM combos
+       WHERE company_id = $1 AND status = 'ACTIVE'
+       ORDER BY name`,
+      [companyId]
+    )
+    .then((r) => r.rows);
+
 
 exports.findMenuItemById = (menuItemId) =>
   pool

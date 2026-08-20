@@ -2,6 +2,7 @@
 // Nghiep vu huy mon: phuc vu gui yeu cau -> BEP quyet dinh.
 //   WAITING  -> vao hang cho bep (PENDING).
 //   Da nau (READY/SERVED/...) -> tu dong REJECTED + danh dau nham lan (BR-08).
+//   COMBO cha -> luon PENDING, bep quyet dinh tach mon le hay huy het.
 const pool = require("../../../config/db");
 const repo = require("./cancel.repository");
 const { BadRequest, NotFound, Conflict } = require("../../../shared/errors/AppError");
@@ -26,7 +27,11 @@ async function createRequest({ orderId, orderItemId, user, reason_code, reason_n
     if (existing) throw new Conflict("Món này đã có yêu cầu hủy đang chờ xử lý");
 
     const qty = Math.min(Number(requested_qty) || item.quantity, item.quantity);
-    const alreadyMade = item.kitchen_status !== "WAITING"; // khong co COOKING; !=WAITING = da lam
+
+    // Combo cha (is_combo_parent = true): LUON gui PENDING cho bep quyet dinh.
+    // Mon le: neu da nau (khong phai WAITING) -> tu dong REJECTED + danh dau nham lan.
+    const isComboParent = item.is_combo_parent === true;
+    const alreadyMade = !isComboParent && item.kitchen_status !== "WAITING";
 
     const base = {
       order_id: item.order_id,
@@ -42,7 +47,7 @@ async function createRequest({ orderId, orderItemId, user, reason_code, reason_n
 
     let request;
     if (alreadyMade) {
-      // BR-08: mon da nau -> khong hoi bep, danh dau nham lan ngay.
+      // BR-08: mon le da nau -> khong hoi bep, danh dau nham lan ngay.
       await repo.flagItemMistake(client, orderItemId, {
         reason_code,
         note: reason_note,
@@ -57,6 +62,7 @@ async function createRequest({ orderId, orderItemId, user, reason_code, reason_n
         stock_effect: "WASTE",
       });
     } else {
+      // WAITING mon le, hoac bat ky Combo cha -> cho bep quyet dinh.
       request = await repo.insertRequest(client, { ...base, status: "PENDING" });
     }
 
@@ -104,7 +110,9 @@ async function accept({ cancelRequestId, user }) {
   }
 }
 
-// Bep tu choi huy (mon da lam) -> danh dau nham lan, thu ngan void khi thanh toan.
+// Bep tu choi huy.
+// - Mon le da nau -> danh dau nham lan, thu ngan void khi thanh toan.
+// - Combo cha -> tach mon con thanh mon le doc lap, huy combo cha.
 async function reject({ cancelRequestId, user, decision_note }) {
   const client = await pool.connect();
   try {
@@ -113,19 +121,42 @@ async function reject({ cancelRequestId, user, decision_note }) {
     if (!cr) throw new NotFound("Không tìm thấy yêu cầu hủy");
     if (cr.status !== "PENDING") throw new Conflict(`Yêu cầu đã ở trạng thái ${cr.status}`);
 
-    await repo.flagItemMistake(client, cr.order_item_id, {
-      reason_code: cr.reason_code,
-      note: cr.reason_note,
-      by: cr.requested_by,
-    });
+    // Kiem tra co phai Combo cha khong
+    const { rows: parentCheck } = await client.query(
+      "SELECT is_combo_parent FROM order_items WHERE order_item_id = $1",
+      [cr.order_item_id]
+    );
+    const isComboParent = parentCheck[0]?.is_combo_parent === true;
+
+    if (isComboParent) {
+      // Combo da lam roi: tach cac mon con thanh mon le, huy combo cha
+      const reasonText = decision_note || cr.reason_note || "Combo bị hủy — phục vụ lẻ";
+      await repo.detachComboChildren(client, cr.order_item_id, reasonText);
+      await repo.cancelComboParentOnly(client, cr.order_item_id);
+      await repo.recomputeOrderTotals(client, cr.order_id);
+    } else {
+      // Mon le da nau -> danh dau nham lan binh thuong
+      await repo.flagItemMistake(client, cr.order_item_id, {
+        reason_code: cr.reason_code,
+        note: cr.reason_note,
+        by: cr.requested_by,
+      });
+    }
+
     await repo.updateRequestDecision(client, cancelRequestId, {
       status: "REJECTED",
       decided_by: user.employee_id || user.id,
-      decision_note: decision_note || "Món đã nấu",
-      stock_effect: "WASTE",
+      decision_note: decision_note || (isComboParent ? "Combo đã làm — tách thành món lẻ" : "Món đã nấu"),
+      stock_effect: isComboParent ? "NONE" : "WASTE",
     });
+
     await client.query("COMMIT");
-    return { cancel_request_id: cancelRequestId, status: "REJECTED", is_mistake: true, order_item_id: cr.order_item_id };
+    return {
+      cancel_request_id: cancelRequestId,
+      status: "REJECTED",
+      is_mistake: !isComboParent,
+      order_item_id: cr.order_item_id,
+    };
   } catch (err) {
     await client.query("ROLLBACK");
     throw err;

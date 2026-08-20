@@ -55,9 +55,47 @@ export default function OrderPanel({
   }, [cartLines, items])
 
   const sentItems = useMemo(() => {
-    return [...(order?.items ?? [])]
-      .filter((i) => i.kitchen_status !== 'CANCELLED')
-      .sort((a, b) => {
+    const list = order?.items ?? []
+    const renderedComboIds = new Set<number>();
+    const mapped = list
+      .filter((i) => !(i.combo_id != null && i.is_combo_parent === false) && i.kitchen_status !== 'CANCELLED')
+      .map(item => {
+        if (!item.is_combo_parent || item.combo_id == null) return item;
+        if (renderedComboIds.has(item.combo_id)) return null;
+        renderedComboIds.add(item.combo_id);
+
+        const comboParents = list.filter(
+          (parent) => parent.combo_id === item.combo_id && parent.is_combo_parent === true && parent.kitchen_status !== 'CANCELLED',
+        );
+        const validChildren = list.filter(
+          (child) => child.combo_id === item.combo_id && child.is_combo_parent === false && child.kitchen_status !== 'CANCELLED',
+        );
+        const servedCount = validChildren.reduce(
+          (count, child) => count + (child.kitchen_status === 'SERVED' ? child.quantity : 0),
+          0,
+        );
+        const readyCount = validChildren.reduce(
+          (count, child) => count + (child.kitchen_status === 'READY' || child.kitchen_status === 'SERVED' ? child.quantity : 0),
+          0,
+        );
+        const total = validChildren.reduce((count, child) => count + child.quantity, 0);
+        const allReady = total > 0 && readyCount === total;
+        const allServed = total > 0 && servedCount === total;
+
+        let parentStatus = 'WAITING';
+        if (allServed) parentStatus = 'SERVED';
+        else if (allReady) parentStatus = 'READY';
+
+        return {
+          ...item,
+          quantity: comboParents.reduce((count, parent) => count + parent.quantity, 0),
+          kitchen_status: parentStatus,
+          _comboProgress: total > 0 ? `${readyCount}/${total} món` : null,
+        } as OrderItem & { _comboProgress?: string | null };
+      })
+      .filter((item): item is OrderItem & { _comboProgress?: string | null } => item !== null);
+
+    return mapped.sort((a, b) => {
         if (a.kitchen_status === 'SERVED' && b.kitchen_status !== 'SERVED') return 1
         if (a.kitchen_status !== 'SERVED' && b.kitchen_status === 'SERVED') return -1
         if (a.kitchen_status === 'READY' && b.kitchen_status !== 'READY') return -1
@@ -120,6 +158,9 @@ export default function OrderPanel({
                     <div className="min-w-0">
                       <div className="text-xs font-bold text-slate-900 dark:text-slate-100">
                         {it.item_name} <span className="text-emerald-600 font-extrabold ml-1">× {it.quantity}</span>
+                        {(it as any)._comboProgress && !isServed && (
+                          <Badge className="ml-2 bg-indigo-100 text-indigo-700">{(it as any)._comboProgress}</Badge>
+                        )}
                       </div>
                       {it.note && <div className="text-[11px] text-slate-500 mt-0.5">📝 {it.note}</div>}
                       {!isServed && !it.is_mistake && !it.has_pending_cancel && (
@@ -151,7 +192,7 @@ export default function OrderPanel({
                   </div>
 
                   {/* Actions */}
-                  {!it.is_mistake && !it.has_pending_cancel && it.kitchen_status !== 'CANCELLED' && (
+                  {!it.is_mistake && !it.has_pending_cancel && it.kitchen_status !== 'CANCELLED' && (isReady || !it.is_combo_parent || it.kitchen_status === 'WAITING') && (
                     <div className="mt-2 flex gap-2 pt-1 border-t border-slate-100 dark:border-slate-800">
                       {isReady && (
                         <Button
@@ -164,15 +205,17 @@ export default function OrderPanel({
                           <Check size={14} /> Phục vụ
                         </Button>
                       )}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="flex-1 h-8 text-xs text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40"
-                        disabled={busy}
-                        onClick={() => onRequestCancel(it)}
-                      >
-                        <X size={14} /> {it.kitchen_status === 'WAITING' ? 'Hủy món' : 'Báo nhầm'}
-                      </Button>
+                      {(!it.is_combo_parent || it.kitchen_status === 'WAITING') && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="flex-1 h-8 text-xs text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40"
+                          disabled={busy}
+                          onClick={() => onRequestCancel(it)}
+                        >
+                          <X size={14} /> {it.kitchen_status === 'WAITING' ? 'Hủy món' : 'Báo nhầm'}
+                        </Button>
+                      )}
                     </div>
                   )}
                 </div>

@@ -106,7 +106,8 @@ export default function CheckoutPanel({
 
   const allItems = order?.items ?? []
   // Bo mon da huy; mon void hien nhung khong tinh tien.
-  const items = allItems.filter((it) => it.kitchen_status !== 'CANCELLED')
+  // Bo mon da huy; bo luon cac mon con cua combo (de chi hien combo cha)
+  const items = allItems.filter((it) => it.kitchen_status !== 'CANCELLED' && !(it.combo_id != null && it.is_combo_parent === false))
   const billable = items.filter((it) => it.billing_status !== 'VOIDED')
   const mistakeUnvoided = items.filter((it) => it.is_mistake && it.billing_status !== 'VOIDED')
   // Tien 1 dong: goc = total_price (hoac don gia x SL), tru % giam rieng cua mon.
@@ -305,8 +306,8 @@ export default function CheckoutPanel({
       <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
         <div className="min-w-0">
           <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-400">Thu ngân</h3>
-          <p className="truncate text-lg font-bold text-slate-900">
-            {table.table_name || table.table_number}
+          <p className="truncate text-lg font-bold text-slate-900 flex items-center">
+            {table.table_number}
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-2">

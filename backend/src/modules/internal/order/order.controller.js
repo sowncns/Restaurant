@@ -6,8 +6,19 @@ const { parseId } = require("../../../shared/utils/parseId");
 const realtime = require("../../../shared/services/realtime.service");
 
 exports.createOrder = asyncHandler(async (req, res) => {
+  let { order_items } = req.body;
+  if (order_items) {
+    order_items = order_items.map(it => {
+      if (it.menu_item_id < 0 || it.is_combo) {
+        return { ...it, combo_id: Math.abs(it.menu_item_id), menu_item_id: null, is_combo: true };
+      }
+      return it;
+    });
+  }
+
   const order = await service.createOrder({
     ...req.body,
+    order_items,
     company_id: req.user.company_id,
     branch_id: req.user.branch_id,
     waiter_id: req.user.employee_id || req.user.id,
@@ -23,8 +34,20 @@ exports.getOrder = asyncHandler(async (req, res) => {
 
 exports.addOrderItems = asyncHandler(async (req, res) => {
   const orderId = parseId(req.params.id, "order id");
+
+  let { items } = req.body;
+  if (items) {
+    items = items.map(it => {
+      if (it.menu_item_id < 0 || it.is_combo) {
+        return { ...it, combo_id: Math.abs(it.menu_item_id), menu_item_id: null, is_combo: true };
+      }
+      return it;
+    });
+  }
+
   const order = await service.addOrderItems(orderId, {
     ...req.body,
+    items,
     company_id: req.user.company_id,
     branch_id: req.user.branch_id,
     waiter_id: req.user.employee_id,

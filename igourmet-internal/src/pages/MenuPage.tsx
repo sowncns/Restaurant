@@ -7,13 +7,14 @@ import { employeesApi, type KitchenTypeOption } from '../api/employees'
 import { Button, PageHeader, Table, Modal, Input, Select, Badge, ErrorText } from '../components/ui'
 import { useAuth } from '../context/AuthContext'
 import { companiesApi, type Company } from '../api/companies'
+import { CombosTab } from './CombosTab'
 
 export default function MenuPage() {
   const { staff } = useAuth()
   const isSuperAdmin = staff?.role === 'SUPER_ADMIN'
   const isBranchManager = staff?.role === 'BRANCH_MANAGER'
 
-  const [tab, setTab] = useState<'items' | 'categories'>('items')
+  const [tab, setTab] = useState<'items' | 'categories' | 'combos'>('items')
   const [filterCompanyId, setFilterCompanyId] = useState<number | ''>('')
   const [companies, setCompanies] = useState<Company[]>([])
 
@@ -37,12 +38,20 @@ export default function MenuPage() {
           </Button>
           {/* BRANCH_MANAGER chỉ được toggle hết/còn, không cần quản lý danh mục */}
           {!isBranchManager && (
-            <Button
-              variant={tab === 'categories' ? 'primary' : 'secondary'}
-              onClick={() => setTab('categories')}
-            >
-              Danh mục
-            </Button>
+            <>
+              <Button
+                variant={tab === 'categories' ? 'primary' : 'secondary'}
+                onClick={() => setTab('categories')}
+              >
+                Danh mục
+              </Button>
+              <Button
+                variant={tab === 'combos' ? 'primary' : 'secondary'}
+                onClick={() => setTab('combos')}
+              >
+                Combo
+              </Button>
+            </>
           )}
         </div>
         {isSuperAdmin && (
@@ -59,7 +68,9 @@ export default function MenuPage() {
           </Select>
         )}
       </div>
-      {tab === 'items' ? <ItemsTab filterCompanyId={filterCompanyId} /> : <CategoriesTab filterCompanyId={filterCompanyId} />}
+      {tab === 'items' && <ItemsTab filterCompanyId={filterCompanyId} />}
+      {tab === 'categories' && <CategoriesTab filterCompanyId={filterCompanyId} />}
+      {tab === 'combos' && <CombosTab filterCompanyId={filterCompanyId} />}
     </div>
   )
 }

@@ -15,6 +15,8 @@ export interface OrderItem {
   quantity: number
   unit_price: number
   total_price: number
+  combo_id?: number | null
+  is_combo_parent?: boolean
   discount_percent?: number
   vat_rate?: number
   vat_amount?: number

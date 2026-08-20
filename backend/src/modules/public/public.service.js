@@ -48,6 +48,23 @@ exports.getMenuByCompany = async (companyId) => {
     const { category_id, category_name, ...rest } = item;
     byCategory.get(category_id).items.push(rest);
   }
+
+  const combos = await repo.listCombosByCompany(companyId);
+  if (combos.length > 0) {
+    byCategory.set(-1, {
+      category_id: -1,
+      category_name: "Combo",
+      items: combos.map(c => ({
+        id: c.id,
+        name: c.name,
+        description: c.description,
+        image_url: c.image_url,
+        price: c.price,
+        is_combo: true
+      })),
+    });
+  }
+
   return Array.from(byCategory.values());
 };
 

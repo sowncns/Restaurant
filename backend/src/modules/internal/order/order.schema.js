@@ -2,7 +2,7 @@
 const { z } = require("zod");
 
 const orderItemSchema = z.object({
-  menu_item_id: z.coerce.number().int().positive(),
+  menu_item_id: z.coerce.number().int(),
   quantity: z.coerce.number().int().positive("Số lượng phải > 0"),
   note: z.string().optional(),
 });

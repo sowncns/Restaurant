@@ -33,6 +33,7 @@ async function start() {
 async function shutdown(signal) {
   logger.info(`${signal} nhận được, đang tắt...`);
   if (server) await new Promise((r) => server.close(r));
+  realtimeService.stop();
   await pool.end();
   if (redisClient.isOpen) await redisClient.quit();
   process.exit(0);

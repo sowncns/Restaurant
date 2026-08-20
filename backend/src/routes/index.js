@@ -21,6 +21,7 @@ const internalProcurementRoute = require("../modules/internal/procurement/procur
 const internalReservationRoute = require("../modules/internal/reservation/reservation.route");
 const internalMenuCategoryRoute = require("../modules/internal/menu/menu.category.route");
 const internalMenuItemRoute = require("../modules/internal/menu/menu.item.route");
+const internalComboRoute = require("../modules/internal/combo/combo.route");
 const internalCompanyRoute = require("../modules/internal/company/company.route");
 const internalCashbackRoute = require("../modules/internal/cashback/cashback.route");
 const internalVoucherRoute = require("../modules/internal/voucher/voucher.route");
@@ -61,6 +62,7 @@ router.use("/internal/procurement", internalProcurementRoute);
 router.use("/internal/reservations", internalReservationRoute);
 router.use("/internal/menu-categories", internalMenuCategoryRoute);
 router.use("/internal/menu-items", internalMenuItemRoute);
+router.use("/internal/combos", internalComboRoute);
 router.use("/internal/companies", internalCompanyRoute);
 router.use("/internal/cashback-rates", internalCashbackRoute);
 router.use("/internal/vouchers", internalVoucherRoute);

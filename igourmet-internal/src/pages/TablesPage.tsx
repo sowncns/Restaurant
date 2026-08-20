@@ -81,7 +81,7 @@ export default function TablesPage() {
   }
 
   async function releaseTable(t: DiningTable) {
-    if (!window.confirm(`Xác nhận khách đã rời bàn ${t.table_name || t.table_number}?`)) return
+    if (!window.confirm(`Xác nhận khách đã rời bàn ${t.table_number}?`)) return
     try {
       await tablesApi.changeStatus(t.id, 'AVAILABLE')
       setSelectedTable((current) => (current?.id === t.id ? null : current))
@@ -157,8 +157,8 @@ export default function TablesPage() {
                     }`}
                   >
                     <div className="mb-2 flex items-center justify-between gap-2">
-                      <span className="truncate text-lg font-semibold text-slate-900">
-                        {t.table_name || t.table_number}
+                      <span className="truncate text-lg font-semibold text-slate-900 flex items-center">
+                        {t.table_number}
                       </span>
                       <Badge className={isPaid ? 'bg-teal-100 text-teal-700' : statusStyle[t.status]}>
                         {isPaid ? 'ĐÃ THANH TOÁN' : t.status}

@@ -16,9 +16,7 @@ pool.on("error", (err) => {
   console.error("Unexpected PG pool error", err);
 });
 
-// Supabase free-tier pooler thinh thoang tu choi ket noi dau tien sau idle (cold start)
-// -> query bung "econnrefused". Chi retry khi ket noi CHUA thanh lap (query chua chay),
-// nen an toan ca voi write. Loi giua chung (ECONNRESET...) khong retry de tranh chay 2 lan.
+
 const CONNECT_FAIL = /failed to connect|econnrefused|etimedout|enotfound/i;
 const isConnectError = (e) =>
   ["ECONNREFUSED", "ETIMEDOUT", "ENOTFOUND"].includes(e && e.code) ||

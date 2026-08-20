@@ -19,7 +19,8 @@ exports.sumOrderTotal = (client, tableId) =>
     .query(
       `SELECT SUM(oi.unit_price * oi.quantity * (1 - oi.discount_percent / 100.0)) AS total
        FROM orders o JOIN order_items oi ON o.order_id = oi.order_id
-       WHERE o.table_id = $1 AND o.status IN ${ACTIVE_STATUSES} AND ${BILLABLE}`,
+       WHERE o.table_id = $1 AND o.status IN ${ACTIVE_STATUSES} AND ${BILLABLE} 
+         AND (oi.combo_id IS NULL OR oi.is_combo_parent = true)`,
       [tableId]
     )
     .then((r) => parseFloat(r.rows[0].total) || 0);
@@ -29,7 +30,8 @@ exports.sumOrderVatTotal = (client, tableId) =>
     .query(
       `SELECT SUM(oi.unit_price * oi.quantity * (1 - oi.discount_percent / 100.0) * oi.vat_rate / 100.0) AS total
        FROM orders o JOIN order_items oi ON o.order_id = oi.order_id
-       WHERE o.table_id = $1 AND o.status IN ${ACTIVE_STATUSES} AND ${BILLABLE}`,
+       WHERE o.table_id = $1 AND o.status IN ${ACTIVE_STATUSES} AND ${BILLABLE} 
+         AND (oi.combo_id IS NULL OR oi.is_combo_parent = true)`,
       [tableId]
     )
     .then((r) => parseFloat(r.rows[0].total) || 0);
@@ -37,13 +39,14 @@ exports.sumOrderVatTotal = (client, tableId) =>
 exports.fetchOrderItemsSnapshot = (client, tableId) =>
   client
     .query(
-      `SELECT mi.name, oi.quantity, oi.unit_price AS price, oi.discount_percent, oi.vat_rate,
+      `SELECT COALESCE(oi.item_name, mi.name) AS name, oi.quantity, oi.unit_price AS price, oi.discount_percent, oi.vat_rate,
               (oi.unit_price * oi.quantity * (1 - oi.discount_percent / 100.0)) AS line_total,
               (oi.unit_price * oi.quantity * (1 - oi.discount_percent / 100.0) * oi.vat_rate / 100.0) AS vat_amount
        FROM orders o
        JOIN order_items oi ON o.order_id = oi.order_id
-       JOIN menu_items mi ON oi.menu_item_id = mi.menu_item_id
-       WHERE o.table_id = $1 AND o.status IN ${ACTIVE_STATUSES} AND ${BILLABLE}`,
+       LEFT JOIN menu_items mi ON oi.menu_item_id = mi.menu_item_id
+       WHERE o.table_id = $1 AND o.status IN ${ACTIVE_STATUSES} AND ${BILLABLE} 
+         AND (oi.combo_id IS NULL OR oi.is_combo_parent = true)`,
       [tableId]
     )
     .then((r) => r.rows);
@@ -52,14 +55,15 @@ exports.fetchOrderItemsSnapshot = (client, tableId) =>
 exports.fetchKiemMonItems = (tableId) =>
   pool
     .query(
-      `SELECT mi.name AS item_name, SUM(oi.quantity) AS quantity, oi.unit_price, oi.discount_percent,
+      `SELECT COALESCE(oi.item_name, mi.name) AS item_name, SUM(oi.quantity) AS quantity, oi.unit_price, oi.discount_percent,
               SUM(oi.unit_price * oi.quantity * (1 - oi.discount_percent / 100.0)) AS line_total, oi.vat_rate AS vat
        FROM orders o
        JOIN order_items oi ON o.order_id = oi.order_id
-       JOIN menu_items mi ON oi.menu_item_id = mi.menu_item_id
-       WHERE o.table_id = $1 AND o.status IN ${ACTIVE_STATUSES} AND ${BILLABLE}
-       GROUP BY mi.name, oi.unit_price, oi.discount_percent, oi.vat_rate
-       ORDER BY mi.name`,
+       LEFT JOIN menu_items mi ON oi.menu_item_id = mi.menu_item_id
+       WHERE o.table_id = $1 AND o.status IN ${ACTIVE_STATUSES} AND ${BILLABLE} 
+         AND (oi.combo_id IS NULL OR oi.is_combo_parent = true)
+       GROUP BY COALESCE(oi.item_name, mi.name), oi.unit_price, oi.discount_percent, oi.vat_rate
+       ORDER BY COALESCE(oi.item_name, mi.name)`,
       [tableId]
     )
     .then((r) => r.rows);

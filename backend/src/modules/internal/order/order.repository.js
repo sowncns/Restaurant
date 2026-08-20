@@ -134,14 +134,15 @@ exports.findReservationTime = (db, reservationId) =>
 exports.bulkInsertOrderItems = (db, orderId, items, servedBy = null) =>
   db.query(
     `INSERT INTO order_items (order_id, menu_item_id, item_name, unit_price, quantity,
-                              total_price, vat_rate, vat_amount, note, served_by, created_at)
-     SELECT $1, m_id, item_name, unit_price, quantity, total_price, vat_rate, vat_amount, note, $10, NOW()
+                              total_price, vat_rate, vat_amount, note, served_by, created_at, combo_id, is_combo_parent, kitchen_status)
+     SELECT $1, m_id, item_name, unit_price, quantity, total_price, vat_rate, vat_amount, note, $10, NOW(), c_id, is_parent,
+            CASE WHEN is_parent = true THEN 'READY'::varchar ELSE 'WAITING'::varchar END
      FROM UNNEST($2::int[], $3::text[], $4::numeric[], $5::int[],
-                 $6::numeric[], $7::numeric[], $8::numeric[], $9::text[])
-       AS t(m_id, item_name, unit_price, quantity, total_price, vat_rate, vat_amount, note)`,
+                 $6::numeric[], $7::numeric[], $8::numeric[], $9::text[], $11::int[], $12::boolean[])
+       AS t(m_id, item_name, unit_price, quantity, total_price, vat_rate, vat_amount, note, c_id, is_parent)`,
     [
       orderId,
-      items.map((i) => i.menu_item_id),
+      items.map((i) => i.menu_item_id || null),
       items.map((i) => i.item_name),
       items.map((i) => i.unit_price),
       items.map((i) => i.quantity),
@@ -150,6 +151,8 @@ exports.bulkInsertOrderItems = (db, orderId, items, servedBy = null) =>
       items.map((i) => i.vat_amount),
       items.map((i) => i.note),
       servedBy ?? null,
+      items.map((i) => i.combo_id || null),
+      items.map((i) => i.is_combo_parent || false)
     ]
   );
 
@@ -206,7 +209,7 @@ exports.findOrderItems = (db, orderId) =>
 exports.findOrderItemsWithMenu = (db, orderId) =>
   db
     .query(
-      `SELECT oi.*, oi.order_item_id AS id, mi.name AS item_name,
+      `SELECT oi.*, oi.order_item_id AS id, COALESCE(oi.item_name, mi.name) AS item_name,
               e.full_name AS served_by_name,
               EXISTS (
                 SELECT 1 FROM cancel_requests cr 
@@ -214,7 +217,7 @@ exports.findOrderItemsWithMenu = (db, orderId) =>
                 AND cr.status = 'PENDING'
               ) AS has_pending_cancel
        FROM order_items oi
-       JOIN menu_items mi ON mi.menu_item_id = oi.menu_item_id
+       LEFT JOIN menu_items mi ON mi.menu_item_id = oi.menu_item_id
        LEFT JOIN employees e ON e.employee_id = oi.served_by
        WHERE oi.order_id = $1`,
       [orderId]
@@ -271,7 +274,7 @@ exports.lockOrderItemScoped = (client, orderItemId, companyId, branchId) =>
   client
     .query(
       `SELECT oi.order_item_id AS id, oi.order_id, oi.menu_item_id, oi.quantity,
-              oi.kitchen_status, oi.item_name, mi.kitchen_type_id
+              oi.kitchen_status, oi.item_name, mi.kitchen_type_id, oi.is_combo_parent, oi.combo_id
        FROM order_items oi
        JOIN orders o ON o.order_id = oi.order_id
        LEFT JOIN menu_items mi ON mi.menu_item_id = oi.menu_item_id
@@ -303,7 +306,7 @@ exports.findKitchenHistory = (companyId, branchId, kitchenTypeId = null, limit =
   pool
     .query(
       `SELECT oi.order_item_id AS id, oi.order_id, oi.menu_item_id, oi.item_name,
-              oi.quantity, oi.kitchen_status, oi.note, oi.created_at, oi.ready_at,
+              oi.quantity, oi.kitchen_status, oi.note, oi.created_at, oi.ready_at, oi.is_mistake,
               o.order_code, dt.table_number,
               mi.kitchen_type_id, kt.code AS kitchen_type_code, kt.name AS kitchen_type_name,
               e.full_name AS waiter_name

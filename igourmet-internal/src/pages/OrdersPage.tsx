@@ -4,6 +4,7 @@ import { tablesApi, type DiningTable } from '../api/tables'
 import { menuApi, type MenuItem, type Category } from '../api/menu'
 import { ordersApi, cancelApi, type Order, type OrderItem, type CancelReason } from '../api/orders'
 import { checkoutApi, type VatInfo } from '../api/checkout'
+import { api } from '../lib/api'
 
 import { errMsg } from '../lib/errMsg'
 import { Button, ErrorText, Modal, Input, Badge } from '../components/ui'
@@ -51,10 +52,35 @@ export default function OrdersPage() {
 
   // Auto Load Data
   useEffect(() => {
-    Promise.all([menuApi.listItems(), menuApi.listCategories()])
-      .then(([its, cats]) => {
-        setItems(its.filter((i) => i.is_available))
-        setCategories(cats)
+    Promise.all([
+      menuApi.listItems(), 
+      menuApi.listCategories(),
+      api.get('/internal/combos').then(res => res.data.combos || [])
+    ])
+      .then(([its, cats, combos]) => {
+        // Map Combos to fake items with negative ID
+        const activeCombos = combos.filter((c: any) => c.status === 'ACTIVE').map((c: any) => ({
+          menu_item_id: -c.id, // Trick: negative ID for combos
+          category_id: -1,
+          kitchen_type_id: 0,
+          name: c.name,
+          description: c.description,
+          image_url: c.image_url,
+          price: c.price,
+          vat: 0,
+          is_available: true,
+          status: 'active',
+          is_combo: true
+        } as MenuItem));
+
+        const allItems = [...its.filter((i) => i.is_available), ...activeCombos];
+        setItems(allItems)
+        
+        if (activeCombos.length > 0) {
+          setCategories([...cats, { category_id: -1, company_id: 0, name: 'Combo', category_type: 'combo', description: '', status: 'active' }])
+        } else {
+          setCategories(cats)
+        }
       })
       .catch((e) => setErr(errMsg(e)))
   }, [])
@@ -62,13 +88,47 @@ export default function OrdersPage() {
   const loadTables = useCallback(() => {
     tablesApi
       .list()
-      .then(setTables)
+      .then((newTables) => {
+        setTables(newTables)
+        // Sync trang thai ban dang chon (vi du: SERVING -> WAIT_PAYMENT)
+        // ma KHONG thay object reference -> tranh reset useEffect([table])
+        setTable((prev) => {
+          if (!prev) return prev
+          const updated = newTables.find((t) => t.id === prev.id)
+          if (!updated) return prev
+          // Chi update neu co gi thay doi that su
+          if (updated.status === prev.status) return prev
+          return updated
+        })
+      })
       .catch((e) => setErr(errMsg(e)))
   }, [])
 
   useEffect(() => {
     loadTables()
+    const timer = setInterval(() => {
+      loadTables()
+    }, 10000)
+    return () => clearInterval(timer)
   }, [loadTables])
+
+  // Auto refresh active order
+  useEffect(() => {
+    if (!table) return
+    const timer = setInterval(() => {
+      ordersApi.getActiveForTable(table.id)
+        .then(activeOrder => {
+          setOrder(activeOrder)
+          const allItemsCancelled = activeOrder != null &&
+            (activeOrder.items ?? []).length > 0 &&
+            (activeOrder.items ?? []).every((it: any) => it.kitchen_status === 'CANCELLED')
+          setCanReleaseTable(table.status === 'SERVING' && (activeOrder == null || allItemsCancelled))
+        })
+        .catch(() => {})
+    }, 10000)
+    return () => clearInterval(timer)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [table?.id])
 
   // Đổi bàn -> switch mobile view sang menu, load lại scan (voucher/thành viên) từ backend
   useEffect(() => {
@@ -88,7 +148,13 @@ export default function OrdersPage() {
       .then((activeOrder) => {
         if (cancelled) return
         setOrder(activeOrder)
-        setCanReleaseTable(table.status === 'SERVING' && activeOrder == null)
+        // Cho phep xả bàn nếu:
+        // 1. Không có order nào đang mở, hoặc
+        // 2. Có order nhưng tất cả items đều đã bị hủy (all CANCELLED)
+        const allItemsCancelled = activeOrder != null &&
+          (activeOrder.items ?? []).length > 0 &&
+          (activeOrder.items ?? []).every((it: any) => it.kitchen_status === 'CANCELLED')
+        setCanReleaseTable(table.status === 'SERVING' && (activeOrder == null || allItemsCancelled))
       })
       .catch(() => {
         if (!cancelled) setOrder(null)
@@ -118,7 +184,8 @@ export default function OrdersPage() {
       })
       .catch(() => { setVatInfo({ companyName: '', taxCode: '', address: '', email: '' }); setVatSaved(false) })
     return () => { cancelled = true }
-  }, [table])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [table?.id])
 
   // Cart Stats
   const cartItemCount = useMemo(() => {
