@@ -7,7 +7,7 @@ const qrRepo = require("../../qr_payment/qr_payment.repository");
 const paymentService = require("../../customer/payment/payment.service");
 const { addPointsAndProcessRank } = require("../../customer/profile/profile.service");
 const { applyCashback } = require("../../../shared/services/cashback.service");
-const { BadRequest, NotFound } = require("../../../shared/errors/AppError");
+const { BadRequest, NotFound, Conflict } = require("../../../shared/errors/AppError");
 const logger = require("../../../shared/utils/logger");
 const { sendVatInvoiceEmail } = require("../../../shared/services/vatInvoiceEmail.service");
 
@@ -28,7 +28,7 @@ async function createInvoice(currentUser, tableId, paymentMethod, customerIdFrom
     await client.query("BEGIN");
 
     // 1. Kiem tra ban
-    const table = await repo.lockTable(client, tableId);
+    const table = await repo.lockTable(client, tableId, currentUser.company_id, currentUser.branch_id);
     if (!table) throw new NotFound("Không tìm thấy bàn");
     if (table.status !== "SERVING" && table.status !== "WAIT_PAYMENT") {
       throw new BadRequest("Bàn không ở trạng thái phục vụ");
@@ -70,6 +70,9 @@ async function createInvoice(currentUser, tableId, paymentMethod, customerIdFrom
       }
       await repo.markDepositApplied(client, held.id);
     }
+    if (table.status === "WAIT_PAYMENT" && await repo.findUnpaidInvoiceByTable(client, tableId)) {
+      throw new Conflict("Bàn đã có hóa đơn chưa thanh toán");
+    }
 
     // VND has no fractional unit; keep invoice and payment gateway amounts identical.
     totalAmount = Math.round(totalAmount);
@@ -80,8 +83,8 @@ async function createInvoice(currentUser, tableId, paymentMethod, customerIdFrom
     // 5. Tao invoice. CASH -> PAID ngay; APP/TRANSFER -> UNPAID (cho khach tra).
     const invoice = await repo.insertInvoice(client, {
       invoice_code: generateInvoiceCode(),
-      company_id: currentUser.company_id,
-      branch_id: currentUser.branch_id,
+      company_id: table.company_id,
+      branch_id: table.branch_id,
       table_id: tableId,
       amount: totalAmount,
       status: paymentMethod === "CASH" ? "PAID" : "UNPAID",
@@ -143,7 +146,7 @@ async function createInvoice(currentUser, tableId, paymentMethod, customerIdFrom
       await client.query("COMMIT");
       
       // Ban push yeu cau thanh toan xuong app cua Khach Hang
-      await qrService.requestPayment(currentUser.branch_id, finalCustomerId, invoice.amount, tableId, invoice.id);
+      await qrService.requestPayment(currentUser, finalCustomerId, invoice.amount, tableId, invoice.id);
       
       await redisClient.del(`table_voucher_${tableId}`);
       return { message: "Đã gửi yêu cầu thanh toán tới Ứng dụng khách hàng.", intent, depositApplied };
@@ -184,18 +187,26 @@ async function createInvoice(currentUser, tableId, paymentMethod, customerIdFrom
 }
 
 
-async function getCheckoutIntent(tableId) {
+async function requireScopedTable(user, tableId) {
+  const table = await repo.findTableScoped(tableId, user.company_id, user.branch_id);
+  if (!table) throw new NotFound("Không tìm thấy bàn");
+  return table;
+}
+
+async function getCheckoutIntent(user, tableId) {
+  await requireScopedTable(user, tableId);
   const data = await redisClient.get(`checkout_intent_table_${tableId}`);
   if (!data) return { hasIntent: false };
   return { hasIntent: true, intent: JSON.parse(data) };
 }
 
-async function cancelCheckoutIntent(tableId) {
+async function cancelCheckoutIntent(user, tableId) {
+  await requireScopedTable(user, tableId);
   await redisClient.del(`checkout_intent_table_${tableId}`);
   const client = await pool.connect();
   try {
     await repo.setTableStatus(client, tableId, "SERVING");
-  } catch (err) {
+  } catch {
     // Ignore error if table doesn't exist
   } finally {
     client.release();
@@ -214,7 +225,8 @@ async function resolveCustomerRef(ref) {
   return r.rows[0].customer_id;
 }
 
-async function validateVoucher(code, orderTotal, tableId, customerRef) {
+async function validateVoucher(user, code, orderTotal, tableId, customerRef) {
+  if (tableId) await requireScopedTable(user, tableId);
   let actualCode = code;
   let customerId = null;
 
@@ -278,7 +290,8 @@ async function validateVoucher(code, orderTotal, tableId, customerRef) {
 
 // ---- Quet QR khach hang (nhan vien) ----
 // Resolve token QR -> gan voucher (kem khach) hoac chi gan khach vao ban.
-async function scanCustomerQR(tableId, token) {
+async function scanCustomerQR(user, tableId, token) {
+  await requireScopedTable(user, tableId);
   let data;
   if (token.startsWith("QRS-")) {
     data = await qrService.resolveScanToken(token); // { type, customerId, voucherCode? }
@@ -295,7 +308,7 @@ async function scanCustomerQR(tableId, token) {
   const orderTotal = await repo.sumOrderTotal(pool, tableId);
 
   if (data.type === "VOUCHER") {
-    const result = await validateVoucher(`${data.customerId}-${data.voucherCode}`, orderTotal, tableId);
+    const result = await validateVoucher(user, `${data.customerId}-${data.voucherCode}`, orderTotal, tableId);
     return {
       type: "VOUCHER",
       customerId: Number(data.customerId),
@@ -325,7 +338,8 @@ async function scanCustomerQR(tableId, token) {
   };
 }
 
-async function getTableVoucher(tableId) {
+async function getTableVoucher(user, tableId) {
+  await requireScopedTable(user, tableId);
   const dataStr = await redisClient.get(`table_voucher_${tableId}`);
   if (!dataStr) return { voucherCode: "", discountAmount: 0, voucherName: "" };
   const data = JSON.parse(dataStr);
@@ -335,17 +349,20 @@ async function getTableVoucher(tableId) {
   return data;
 }
 
-async function saveTableVat(tableId, vatData) {
+async function saveTableVat(user, tableId, vatData) {
+  await requireScopedTable(user, tableId);
   await redisClient.set(`table_vat_${tableId}`, JSON.stringify(vatData), { EX: 3600 });
 }
 
-async function getTableVat(tableId) {
+async function getTableVat(user, tableId) {
+  await requireScopedTable(user, tableId);
   const data = await redisClient.get(`table_vat_${tableId}`);
   return data ? JSON.parse(data) : null;
 }
 
 // ---- Kiem mon (pre-bill): mon hien tai + gia goc + VAT tung muc. Khong thu tien. ----
-async function getKiemMon(tableId) {
+async function getKiemMon(user, tableId) {
+  await requireScopedTable(user, tableId);
   const rows = await repo.fetchKiemMonItems(tableId);
   let subtotal = 0;
   let vatTotal = 0;
@@ -369,8 +386,9 @@ async function getKiemMon(tableId) {
 }
 
 // ---- Hoa don moi nhat ----
-async function getLatestInvoice(tableId) {
-  const invoice = await repo.findLatestPaidInvoice(tableId);
+async function getLatestInvoice(user, tableId) {
+  await requireScopedTable(user, tableId);
+  const invoice = await repo.findLatestPaidInvoice(tableId, user.company_id, user.branch_id);
   if (!invoice) throw new NotFound("Không tìm thấy hóa đơn gần nhất cho bàn này");
   // Uu tien lay items tu snapshot JSON trong invoice (chinh xac, ke ca khi ghi no va ban da reset).
   let items = [];
@@ -381,7 +399,8 @@ async function getLatestInvoice(tableId) {
   if (!items.length) {
     items = await repo.findCompletedItems(tableId);
   }
-  const { items_snapshot, ...invoiceData } = invoice;
+  const invoiceData = { ...invoice };
+  delete invoiceData.items_snapshot;
   return { ...invoiceData, items };
 }
 
@@ -489,9 +508,13 @@ async function listInvoices(currentUser, filters) {
   return repo.listInvoices(currentUser, filters);
 }
 
-async function markInvoicePaid(invoiceId) {
-  const inv = await repo.markInvoicePaid(invoiceId);
-  if (inv.rowCount === 0) throw new NotFound("Không tìm thấy hóa đơn");
+async function markInvoicePaid(user, invoiceId) {
+  const inv = await repo.markInvoicePaid(invoiceId, user.company_id, user.branch_id);
+  if (inv.rowCount === 0) {
+    const existing = await repo.findInvoiceStatusScoped(invoiceId, user.company_id, user.branch_id);
+    if (!existing) throw new NotFound("Không tìm thấy hóa đơn");
+    throw new Conflict("Hóa đơn đã được xử lý");
+  }
   void sendVatInvoiceEmail({ invoiceId });
   return { message: "Đã cập nhật hóa đơn thành Đã thanh toán" };
 }

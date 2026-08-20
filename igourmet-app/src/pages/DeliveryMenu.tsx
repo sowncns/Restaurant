@@ -2,20 +2,20 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, MapPin, Search, Plus, ShoppingBag } from 'lucide-react';
 import api from '../lib/api';
+import { useAuth } from '../contexts/AuthContext';
 
 const DeliveryMenu = () => {
   const { companyId, branchId } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [menuItems, setMenuItems] = useState<any[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [activeCategory, setActiveCategory] = useState<string>('Tất cả');
   const [loading, setLoading] = useState(true);
   const [cart, setCart] = useState<{ [id: string]: { item: any; quantity: number } }>({});
-  const [cartId, setCartId] = useState<number | null>(null);
   const [isCartOpen, setIsCartOpen] = useState(false);
 
   useEffect(() => {
-    let currentMenuItems: any[] = [];
     const fetchMenu = async () => {
       try {
         const response: any = await api.get(`/public/companies/${companyId}/menu`);
@@ -29,44 +29,11 @@ const DeliveryMenu = () => {
         
         if (items) {
           setMenuItems(items);
-          currentMenuItems = items;
           
           if (items.length > 0) {
             // Extract categories
             const cats = new Set(items.map((item: any) => item.category_name).filter(Boolean));
             setCategories(['Tất cả', ...Array.from(cats)] as string[]);
-          }
-        }
-
-        // Fetch Cart from API
-        try {
-          const cartResponse: any = await api.get('/customer/cart');
-          if (cartResponse.cart) {
-            setCartId(cartResponse.cart.id);
-            if (cartResponse.cart.items) {
-               const newCart: any = {};
-               cartResponse.cart.items.forEach((cartItem: any) => {
-                  const menuItem = currentMenuItems.find(m => m.menu_item_id === cartItem.menu_item_id);
-                  if (menuItem) {
-                     newCart[menuItem.menu_item_id] = { item: menuItem, quantity: cartItem.quantity };
-                  }
-               });
-               setCart(newCart);
-            }
-          }
-        } catch (cartError: any) {
-          // If cart not found, create one
-          if (cartError.response?.status === 404 || cartError.response?.status === 400) {
-            try {
-              const createResponse: any = await api.post('/customer/cart/create');
-              if (createResponse.cart) {
-                setCartId(createResponse.cart.id);
-              }
-            } catch (createErr) {
-              console.error('Lỗi tạo giỏ hàng', createErr);
-            }
-          } else if (cartError.response?.status !== 401) {
-             console.error('Lỗi tải giỏ hàng', cartError);
           }
         }
       } catch (error) {
@@ -89,12 +56,11 @@ const DeliveryMenu = () => {
   const totalQuantity = cartItemsList.reduce((sum, c) => sum + c.quantity, 0);
   const totalPrice = cartItemsList.reduce((sum, c) => sum + Number(c.item.price || 0) * c.quantity, 0);
 
-  const updateQuantity = async (item: any, delta: number) => {
+  const updateQuantity = (item: any, delta: number) => {
     const id = item.id || item.menu_item_id || item.branch_menu_item_id;
     const existing = cart[id] || { item, quantity: 0 };
     const newQuantity = Math.max(0, existing.quantity + delta);
     
-    // Cập nhật giao diện ngay lập tức (Optimistic UI)
     setCart(prev => {
       const newCart = { ...prev };
       if (newQuantity === 0) {
@@ -105,20 +71,15 @@ const DeliveryMenu = () => {
       return newCart;
     });
 
-    // Đồng bộ API nếu đã có cartId (người dùng đã đăng nhập)
-    if (cartId) {
-      try {
-        if (existing.quantity === 0 && newQuantity > 0) {
-          await api.post('/customer/cart/add', { cartId, menuItemId: id, quantity: newQuantity });
-        } else if (newQuantity === 0) {
-          await api.delete('/customer/cart/remove', { data: { cartId, menuItemId: id } });
-        } else {
-          await api.put('/customer/cart/update', { cartId, menuItemId: id, quantity: newQuantity });
-        }
-      } catch (error) {
-        console.error('Lỗi đồng bộ giỏ hàng với API', error);
-      }
+  };
+
+  const continueToBooking = () => {
+    const destination = { pathname: '/booking', state: { companyId, branchId, preorderCart: cart } };
+    if (!user) {
+      navigate('/login', { state: { from: destination } });
+      return;
     }
+    navigate(destination.pathname, { state: destination.state });
   };
 
   const formatPrice = (price: number | string) => {
@@ -320,7 +281,7 @@ const DeliveryMenu = () => {
               </div>
               <div className="flex flex-col gap-3">
                 <button 
-                  onClick={() => navigate('/booking', { state: { companyId, branchId } })}
+                  onClick={continueToBooking}
                   className="w-full bg-[#00a662] text-white rounded-2xl p-4 font-bold hover:bg-[#008f55] transition-colors shadow-lg flex justify-center items-center gap-2"
                 >
                   <ShoppingBag className="w-5 h-5" /> Đặt bàn kèm thực đơn này

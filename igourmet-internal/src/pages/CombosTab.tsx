@@ -18,8 +18,8 @@ export function CombosTab({ filterCompanyId }: { filterCompanyId: number | '' })
   async function load() {
     try {
       const [combos, items] = await Promise.all([
-        comboApi.list(),
-        menuApi.listItems()
+        comboApi.list(filterCompanyId),
+        menuApi.listItems(filterCompanyId)
       ])
       setList(combos)
       setMenuItems(items)
@@ -28,13 +28,19 @@ export function CombosTab({ filterCompanyId }: { filterCompanyId: number | '' })
     }
   }
   useEffect(() => {
-    void load()
-  }, [])
+    Promise.all([
+      comboApi.list(filterCompanyId),
+      menuApi.listItems(filterCompanyId),
+    ]).then(([combos, items]) => {
+      setList(combos)
+      setMenuItems(items)
+    }).catch((e) => setErr(errMsg(e)))
+  }, [filterCompanyId])
 
-  async function remove(id: number) {
+  async function remove(id: number, companyId: number) {
     if (!confirm('Xóa combo này?')) return
     try {
-      await comboApi.remove(id)
+      await comboApi.remove(id, companyId)
       void load()
     } catch (e) {
       alert(errMsg(e))
@@ -75,14 +81,14 @@ export function CombosTab({ filterCompanyId }: { filterCompanyId: number | '' })
                   <button
                     className="mr-2 text-slate-500 hover:text-slate-800"
                     onClick={async () => {
-                      const fullCombo = await comboApi.get(c.id)
+                      const fullCombo = await comboApi.get(c.id, c.company_id)
                       setEditing(fullCombo)
                       setOpen(true)
                     }}
                   >
                     <Pencil size={16} />
                   </button>
-                  <button className="text-red-500 hover:text-red-700" onClick={() => remove(c.id)}>
+                  <button className="text-red-500 hover:text-red-700" onClick={() => remove(c.id, c.company_id)}>
                     <Trash2 size={16} />
                   </button>
                 </>
@@ -150,6 +156,11 @@ function ComboForm({
     setSaving(true)
     setErr('')
     try {
+      const normalizedItems = items.map(i => ({ menu_item_id: Number(i.menu_item_id), quantity: Number(i.quantity) }))
+      const originalItems = combo?.items?.map(i => ({
+        menu_item_id: Number(i.menu_item_id),
+        quantity: Number(i.quantity),
+      }))
       const body: any = {
         combo_code: code,
         name,
@@ -157,8 +168,8 @@ function ComboForm({
         image_url: imageUrl,
         price: Number(price),
         status,
-        items: items.map(i => ({ menu_item_id: i.menu_item_id, quantity: i.quantity }))
       }
+      if (!combo || JSON.stringify(normalizedItems) !== JSON.stringify(originalItems)) body.items = normalizedItems
       if (filterCompanyId) body.company_id = filterCompanyId
       
       if (combo) await comboApi.update(combo.id, body)

@@ -214,8 +214,13 @@ export default function CheckoutPanel({
     try {
       const res = await checkoutApi.getIntent(table.id)
       if (!res.hasIntent) {
-        alert('Đã thanh toán thành công!')
-        setPaidInvoiceId(intent?.invoiceId || 1) // co gia tri -> hien modal + nut In hoa don
+        const invoice = await checkoutApi.getLatestInvoice(table.id)
+        if (invoice?.status === 'PAID') {
+          setPaidInvoiceId(invoice.id || intent?.invoiceId)
+        } else {
+          setIntent(null)
+          alert('Không còn yêu cầu thanh toán, nhưng hóa đơn chưa được xác nhận đã thanh toán.')
+        }
       } else {
         setIntent(res.intent ?? intent)
         alert('Khách chưa hoàn tất thanh toán. Vui lòng chờ khách xác nhận rồi kiểm tra lại.')
@@ -250,7 +255,14 @@ export default function CheckoutPanel({
         }
       } else if (method === 'CASH' || method === 'DEBT') {
         alert(res.message)
-        setPaidInvoiceId(res.intent?.invoiceId || 1) // Just mark as paid to show print button
+        const invoice = await checkoutApi.getLatestInvoice(table.id)
+        if (method === 'CASH' && invoice?.status === 'PAID') {
+          setPaidInvoiceId(invoice.id || res.intent?.invoiceId)
+        } else if (method === 'DEBT' && (invoice?.status === 'DEBT' || invoice?.status === 'UNPAID')) {
+          onPaid()
+        } else {
+          setErr('Hóa đơn chưa được hệ thống xác nhận. Vui lòng kiểm tra lại trước khi đóng bàn.')
+        }
       } else {
         alert(res.message)
         void loadIntent()

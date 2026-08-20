@@ -8,7 +8,7 @@ const env = require("../../../config/env");
 const orderService = require("../order/order.service");
 const orderRepo = require("../order/order.repository");
 const depositService = require("../../../shared/services/deposit.service");
-const { NotFound, BadRequest, Forbidden } = require("../../../shared/errors/AppError");
+const { NotFound, BadRequest } = require("../../../shared/errors/AppError");
 const { buildScopedBranchWhere, assertBranchScope } = require("../../../shared/utils/permission");
 
 // Trang thai ban duoc coi la "dang su dung" (khong the don khach dat vao) -> canh bao doi ban.
@@ -98,21 +98,33 @@ exports.create = async (currentUser, data) => {
   const { branchId, companyId } = await resolveBranch(currentUser, data.branch_id);
   await assertWithinOpenHours(branchId, data.reservation_time);
   await assertTableInBranch(data.table_id, branchId);
-  if (data.table_id) {
-    const conflict = await repo.hasReservationConflict(
-      data.table_id, data.reservation_date, data.reservation_time
-    );
-    if (conflict) {
-      throw new BadRequest("Bàn này đã có phiếu đặt khác trong khung giờ, vui lòng chọn bàn khác.");
+  const client = await pool.connect();
+  let id;
+  try {
+    await client.query("BEGIN");
+    if (data.table_id) {
+      await repo.lockTableSlot(client, data.table_id, data.reservation_date);
+      const conflict = await repo.hasReservationConflict(
+        data.table_id, data.reservation_date, data.reservation_time, 0, client
+      );
+      if (conflict) {
+        throw new BadRequest("Bàn này đã có phiếu đặt khác trong khung giờ, vui lòng chọn bàn khác.");
+      }
     }
+    id = await repo.createTx(client, {
+      ...data,
+      reservation_code: generateReservationCode(),
+      company_id: companyId,
+      branch_id: branchId,
+      created_by: currentUser.id,
+    });
+    await client.query("COMMIT");
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
   }
-  const id = await repo.create({
-    ...data,
-    reservation_code: generateReservationCode(),
-    company_id: companyId,
-    branch_id: branchId,
-    created_by: currentUser.id,
-  });
 
   // Đặt bàn kèm đặt món -> đơn SCHEDULED gắn phiếu đặt (không gán bàn, không trừ kho).
   // Bếp duyệt sau khi khách check-in. Không thu cọc (khách vãng lai/gọi điện).
@@ -136,24 +148,39 @@ exports.create = async (currentUser, data) => {
 };
 
 exports.update = async (currentUser, id, data) => {
-  const reservation = await repo.findById(id);
-  if (!reservation) throw new NotFound("Không tìm thấy phiếu đặt bàn");
-  assertBranchScope(currentUser, { id: reservation.branch_id, company_id: reservation.company_id });
-  if (TERMINAL.includes(reservation.status)) {
-    throw new BadRequest("Phiếu đặt đã kết thúc, không thể sửa");
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const reservation = await repo.findByIdForUpdate(client, id);
+    if (!reservation) throw new NotFound("Không tìm thấy phiếu đặt bàn");
+    assertBranchScope(currentUser, { id: reservation.branch_id, company_id: reservation.company_id });
+    if (TERMINAL.includes(reservation.status)) {
+      throw new BadRequest("Phiếu đặt đã kết thúc, không thể sửa");
+    }
+    const time = data.reservation_time ?? reservation.reservation_time;
+    const date = data.reservation_date ?? reservation.reservation_date;
+    const tableId = data.table_id !== undefined ? data.table_id : reservation.table_id;
+    if (data.reservation_time !== undefined) await assertWithinOpenHours(reservation.branch_id, time);
+    if (data.table_id !== undefined && data.table_id !== null) {
+      await assertTableInBranch(data.table_id, reservation.branch_id);
+    }
+    if (tableId != null && (data.table_id !== undefined || data.reservation_date !== undefined || data.reservation_time !== undefined)) {
+      await repo.lockTableSlot(client, tableId, date);
+      const conflict = await repo.hasReservationConflict(tableId, date, time, reservation.id, client);
+      if (conflict) {
+        throw new BadRequest("Bàn này đã có phiếu đặt khác trong khung giờ, vui lòng chọn bàn khác.");
+      }
+    }
+    // Doi ngay/gio hen -> danh dau de bep thay canh bao tren don dat mon truoc.
+    if (data.reservation_date !== undefined || data.reservation_time !== undefined) data.rescheduled_at = new Date();
+    await repo.updateTx(client, id, data);
+    await client.query("COMMIT");
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
   }
-  if (data.reservation_time !== undefined) {
-    await assertWithinOpenHours(reservation.branch_id, data.reservation_time);
-  }
-  if (data.table_id !== undefined && data.table_id !== null) {
-    await assertTableInBranch(data.table_id, reservation.branch_id);
-  }
-  // Doi ngay/gio hen -> danh dau de bep thay canh bao tren don dat mon truoc.
-  // Co tu clear khi bep duyet/huy (don roi khoi danh sach SCHEDULED).
-  if (data.reservation_date !== undefined || data.reservation_time !== undefined) {
-    data.rescheduled_at = new Date();
-  }
-  await repo.update(id, data);
   return repo.findById(id);
 };
 
@@ -185,25 +212,36 @@ exports.suggestTable = async (currentUser, id) => {
 
 // Gan ban giu cho (SUPER/COMPANY/BRANCH manager + RECEPTIONIST).
 exports.assignTable = async (currentUser, id, tableId) => {
-  const reservation = await repo.findById(id);
-  if (!reservation) throw new NotFound("Không tìm thấy phiếu đặt bàn");
-  assertBranchScope(currentUser, { id: reservation.branch_id, company_id: reservation.company_id });
-  if (TERMINAL.includes(reservation.status)) throw new BadRequest("Phiếu đặt đã kết thúc");
-  const table = await repo.findTable(tableId);
-  if (!table) throw new BadRequest("Bàn không tồn tại");
-  if (table.branch_id !== reservation.branch_id) throw new BadRequest("Bàn không thuộc chi nhánh của phiếu đặt");
-  if (Number(table.capacity) < Number(reservation.guest_count)) {
-    throw new BadRequest(`Bàn chỉ ${table.capacity} chỗ, không đủ cho ${reservation.guest_count} khách`);
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const reservation = await repo.findByIdForUpdate(client, id);
+    if (!reservation) throw new NotFound("Không tìm thấy phiếu đặt bàn");
+    assertBranchScope(currentUser, { id: reservation.branch_id, company_id: reservation.company_id });
+    if (TERMINAL.includes(reservation.status)) throw new BadRequest("Phiếu đặt đã kết thúc");
+    const table = await repo.findTable(tableId);
+    if (!table) throw new BadRequest("Bàn không tồn tại");
+    if (table.branch_id !== reservation.branch_id) throw new BadRequest("Bàn không thuộc chi nhánh của phiếu đặt");
+    if (Number(table.capacity) < Number(reservation.guest_count)) {
+      throw new BadRequest(`Bàn chỉ ${table.capacity} chỗ, không đủ cho ${reservation.guest_count} khách`);
+    }
+    await repo.lockTableSlot(client, tableId, reservation.reservation_date);
+    const conflict = await repo.hasReservationConflict(
+      tableId, reservation.reservation_date, reservation.reservation_time, reservation.id, client
+    );
+    if (conflict) {
+      throw new BadRequest("Bàn này đã có phiếu đặt khác trong khung giờ, vui lòng chọn bàn khác.");
+    }
+    await repo.assignTx(client, id, tableId);
+    // Neu phieu co dat mon truoc (order SCHEDULED) -> gan luon ban do de bep thay & duyet.
+    await orderRepo.setScheduledOrderTable(client, id, tableId);
+    await client.query("COMMIT");
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
   }
-  const conflict = await repo.hasReservationConflict(
-    tableId, reservation.reservation_date, reservation.reservation_time, reservation.id
-  );
-  if (conflict) {
-    throw new BadRequest("Bàn này đã có phiếu đặt khác trong khung giờ, vui lòng chọn bàn khác.");
-  }
-  await repo.assign(id, tableId);
-  // Neu phieu co dat mon truoc (order SCHEDULED) -> gan luon ban do de bep thay & duyet.
-  await orderRepo.setScheduledOrderTable(pool, id, tableId);
   return repo.findById(id);
 };
 
@@ -253,7 +291,7 @@ exports.checkin = async (currentUser, id, tableId) => {
 
     const finalTableId = tableId ?? reservation.table_id;
     if (finalTableId == null) throw new BadRequest("Cần chọn bàn để check-in");
-    const table = await repo.findTable(finalTableId);
+    const table = await repo.lockTableForCheckin(client, finalTableId);
     if (!table || table.branch_id !== reservation.branch_id) throw new BadRequest("Bàn không thuộc chi nhánh của phiếu đặt");
     if (table.status === "SERVING" || table.status === "WAIT_PAYMENT") {
       throw new BadRequest("Bàn này đang có khách, không thể nhận khách đặt trước. Vui lòng thanh toán hoặc chuyển bàn cho khách cũ trước.");

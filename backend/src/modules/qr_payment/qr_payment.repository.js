@@ -22,6 +22,15 @@ exports.findRestaurantName = (branchId) =>
       r.rows[0] ? `${r.rows[0].company_name} - ${r.rows[0].branch_name}` : "Nhà hàng iGourmet"
     );
 
+exports.lockInvoiceForPayment = (client, invoiceId, companyId, branchId) =>
+  client
+    .query(
+      `SELECT invoice_id AS id, amount, table_id, customer_id, company_id, branch_id, status
+       FROM invoices WHERE invoice_id = $1 AND company_id = $2 AND branch_id = $3 FOR UPDATE`,
+      [invoiceId, companyId, branchId]
+    )
+    .then((r) => r.rows[0]);
+
 // Lay voucher (chua dung) cua khach theo customer_voucher_id -> tra voucher code.
 exports.findUnusedCustomerVoucher = (customerId, customerVoucherId) =>
   pool
@@ -64,7 +73,7 @@ exports.insertPayTransaction = (client, t) =>
 
 exports.markInvoicePaid = (client, invoiceId, customerId) =>
   client.query(
-    "UPDATE invoices SET status = 'PAID', paid_at = NOW(), customer_id = $1 WHERE invoice_id = $2",
+    "UPDATE invoices SET status = 'PAID', paid_at = NOW(), customer_id = $1 WHERE invoice_id = $2 AND status = 'UNPAID'",
     [customerId, invoiceId]
   );
 

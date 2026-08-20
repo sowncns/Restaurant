@@ -1,0 +1,1950 @@
+{
+  "total": 183,
+  "public": 23,
+  "protected": 160,
+  "safe_reads": 75,
+  "live_probe_exclusions": [
+    "GET /customer/auth/test-mail"
+  ],
+  "routes": [
+    {
+      "id": "POST /webhook",
+      "audience": "public",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "RECEPTIONIST",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "POST /customer/auth/register",
+      "audience": "public",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "RECEPTIONIST",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "POST /customer/auth/login",
+      "audience": "public",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "RECEPTIONIST",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "POST /customer/auth/refresh-token",
+      "audience": "public",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "RECEPTIONIST",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "POST /customer/auth/logout",
+      "audience": "public",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "RECEPTIONIST",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "POST /customer/auth/forgot-password",
+      "audience": "public",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "RECEPTIONIST",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "POST /customer/auth/reset-password",
+      "audience": "public",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "RECEPTIONIST",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "GET /customer/auth/verify-email",
+      "audience": "public",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "RECEPTIONIST",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "POST /customer/auth/verify-email",
+      "audience": "public",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "RECEPTIONIST",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "POST /customer/auth/resend-verification",
+      "audience": "public",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "RECEPTIONIST",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "GET /customer/auth/test-mail",
+      "audience": "public",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "RECEPTIONIST",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "POST /internal/auth/login",
+      "audience": "public",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "RECEPTIONIST",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "POST /internal/auth/refresh-token",
+      "audience": "public",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "RECEPTIONIST",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "POST /internal/auth/logout",
+      "audience": "public",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "RECEPTIONIST",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "POST /public/reservations",
+      "audience": "public",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "RECEPTIONIST",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "GET /public/companies",
+      "audience": "public",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "RECEPTIONIST",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "GET /public/companies/:companyId",
+      "audience": "public",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "RECEPTIONIST",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "GET /public/companies/:companyId/branches",
+      "audience": "public",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "RECEPTIONIST",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "GET /public/branches/:branchId",
+      "audience": "public",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "RECEPTIONIST",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "GET /public/companies/:companyId/categories",
+      "audience": "public",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "RECEPTIONIST",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "GET /public/companies/:companyId/menu",
+      "audience": "public",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "RECEPTIONIST",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "GET /public/menu-items/:menuItemId",
+      "audience": "public",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "RECEPTIONIST",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "GET /public/home-banners",
+      "audience": "public",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "RECEPTIONIST",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "POST /customer/auth/change-password",
+      "audience": "customer",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "RECEPTIONIST",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "POST /customer/auth/request-verification",
+      "audience": "customer",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "RECEPTIONIST",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "GET /customer/profile/me",
+      "audience": "customer",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "RECEPTIONIST",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "POST /customer/profile/verify-pin",
+      "audience": "customer",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "RECEPTIONIST",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "GET /customer/profile/transactions",
+      "audience": "customer",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "RECEPTIONIST",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "PUT /customer/profile/me",
+      "audience": "customer",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "RECEPTIONIST",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "POST /customer/profile/setup-pin",
+      "audience": "customer",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "RECEPTIONIST",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "POST /customer/profile/reset-pin-by-password",
+      "audience": "customer",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "RECEPTIONIST",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "GET /customer/voucher/",
+      "audience": "customer",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "RECEPTIONIST",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "GET /customer/reservations/",
+      "audience": "customer",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "RECEPTIONIST",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "GET /customer/reservations/:id",
+      "audience": "customer",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "RECEPTIONIST",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "POST /customer/reservations/",
+      "audience": "customer",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "RECEPTIONIST",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "DELETE /customer/reservations/:id",
+      "audience": "customer",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "RECEPTIONIST",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "POST /customer/payment/create",
+      "audience": "customer",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "RECEPTIONIST",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "GET /customer/qr-payment/pending",
+      "audience": "customer",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "RECEPTIONIST",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "GET /customer/qr-payment/stream",
+      "audience": "customer",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "RECEPTIONIST",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "GET /customer/qr-payment/invoices",
+      "audience": "customer",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "RECEPTIONIST",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "GET /customer/qr-payment/invoices/:id",
+      "audience": "customer",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "RECEPTIONIST",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "POST /customer/qr-payment/confirm",
+      "audience": "customer",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "RECEPTIONIST",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "POST /customer/qr-payment/generate-token",
+      "audience": "customer",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "RECEPTIONIST",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "POST /customer/qr-payment/scan-token",
+      "audience": "customer",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "RECEPTIONIST",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "GET /internal/dining-tables/sections",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "RECEPTIONIST",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "GET /internal/dining-tables/sections/:sectionId",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "RECEPTIONIST",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "POST /internal/dining-tables/sections",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "COMPANY_ADMIN",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "PUT /internal/dining-tables/sections/:sectionId",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "COMPANY_ADMIN",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "PATCH /internal/dining-tables/sections/:sectionId/status",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "COMPANY_ADMIN",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "DELETE /internal/dining-tables/sections/:sectionId",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "COMPANY_ADMIN",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "GET /internal/dining-tables/tables",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "RECEPTIONIST",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "GET /internal/dining-tables/tables/:tableId",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "RECEPTIONIST",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "POST /internal/dining-tables/tables",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "COMPANY_ADMIN",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "PUT /internal/dining-tables/tables/:tableId",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "RECEPTIONIST",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "PATCH /internal/dining-tables/tables/:tableId/status",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "RECEPTIONIST",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "DELETE /internal/dining-tables/tables/:tableId",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "COMPANY_ADMIN",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "POST /internal/orders/",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "COMPANY_ADMIN",
+        "RECEPTIONIST",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "POST /internal/orders/:order_id/items/:order_item_id/cancel-request",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "COMPANY_ADMIN",
+        "RECEPTIONIST",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "GET /internal/orders/kitchen/preorders",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "POST /internal/orders/kitchen/preorders/:reservationId/confirm",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "POST /internal/orders/kitchen/preorders/:reservationId/cancel",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "GET /internal/orders/kitchen/queue",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "GET /internal/orders/kitchen/stream",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "GET /internal/orders/kitchen/history",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "POST /internal/orders/kitchen/scan",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "GET /internal/orders/table/:tableId/active",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "RECEPTIONIST",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "GET /internal/orders/:id",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "RECEPTIONIST",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "PUT /internal/orders/:id/items",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "COMPANY_ADMIN",
+        "RECEPTIONIST",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "POST /internal/orders/:id/cancel-empty",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "COMPANY_ADMIN",
+        "RECEPTIONIST",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "POST /internal/orders/:id/scan-qr",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "COMPANY_ADMIN",
+        "RECEPTIONIST",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "POST /internal/orders/:id/cook",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "PATCH /internal/orders/items/:itemId/kitchen-status",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "GET /internal/cancel-requests/",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "PATCH /internal/cancel-requests/:cancel_request_id/accept",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "PATCH /internal/cancel-requests/:cancel_request_id/reject",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "PATCH /internal/cancel-requests/:cancel_request_id/withdraw",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "COMPANY_ADMIN",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "GET /internal/employees/roles",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "COMPANY_ADMIN",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "GET /internal/employees/kitchen-types",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "COMPANY_ADMIN",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "GET /internal/employees/",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "COMPANY_ADMIN",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "GET /internal/employees/:id",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "COMPANY_ADMIN",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "POST /internal/employees/",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "COMPANY_ADMIN",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "PUT /internal/employees/:id",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "COMPANY_ADMIN",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "PATCH /internal/employees/:id/status",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "COMPANY_ADMIN",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "POST /internal/employees/:id/reset-password",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "COMPANY_ADMIN",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "GET /internal/reports/dashboard",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "COMPANY_ADMIN",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "GET /internal/reports/admin-overview",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "COMPANY_ADMIN",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "GET /internal/reports/revenue",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "COMPANY_ADMIN",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "GET /internal/reports/top-items",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "COMPANY_ADMIN",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "GET /internal/branches/",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "COMPANY_ADMIN",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "GET /internal/branches/:id",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "COMPANY_ADMIN",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "POST /internal/branches/",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "COMPANY_ADMIN",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "PUT /internal/branches/:id",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "COMPANY_ADMIN",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "PATCH /internal/branches/:id/status",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "COMPANY_ADMIN",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "DELETE /internal/branches/:id",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "COMPANY_ADMIN",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "POST /internal/checkout/create-invoice",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "GET /internal/checkout/intent/:tableId",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "DELETE /internal/checkout/intent/:tableId",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "POST /internal/checkout/scan",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "POST /internal/checkout/validate-voucher",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "GET /internal/checkout/table/:tableId/voucher",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "POST /internal/checkout/items/:order_item_id/void",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "POST /internal/checkout/items/:order_item_id/discount",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "POST /internal/checkout/items/:order_item_id/reduce-quantity",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "GET /internal/checkout/table/:tableId/kiem-mon",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "GET /internal/checkout/table/:tableId/latest-invoice",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "POST /internal/checkout/table/:tableId/vat",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "GET /internal/checkout/table/:tableId/vat",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "GET /internal/checkout/invoices",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "POST /internal/checkout/invoices/:invoiceId/pay",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "GET /internal/inventory/ingredients",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "GET /internal/inventory/ingredients/low-stock",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "GET /internal/inventory/ingredients/:id",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "GET /internal/inventory/recipes/menu-item/:menuItemId",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "GET /internal/inventory/transactions",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "GET /internal/inventory/estimate/order/:orderId",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "POST /internal/inventory/ingredients",
+      "audience": "internal",
+      "roles": [
+        "COMPANY_ADMIN",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "PUT /internal/inventory/ingredients/:id",
+      "audience": "internal",
+      "roles": [
+        "COMPANY_ADMIN",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "DELETE /internal/inventory/ingredients/:id",
+      "audience": "internal",
+      "roles": [
+        "COMPANY_ADMIN",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "PUT /internal/inventory/recipes/menu-item/:menuItemId",
+      "audience": "internal",
+      "roles": [
+        "COMPANY_ADMIN",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "DELETE /internal/inventory/recipes/:id",
+      "audience": "internal",
+      "roles": [
+        "COMPANY_ADMIN",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "POST /internal/inventory/transactions",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "COMPANY_ADMIN",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "GET /internal/audit-logs/",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "COMPANY_ADMIN",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "GET /internal/procurement/suppliers",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "GET /internal/procurement/suppliers/:id",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "POST /internal/procurement/suppliers",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "COMPANY_ADMIN",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "PUT /internal/procurement/suppliers/:id",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "COMPANY_ADMIN",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "DELETE /internal/procurement/suppliers/:id",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "COMPANY_ADMIN",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "GET /internal/procurement/receipts",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "GET /internal/procurement/receipts/by-code/:code",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "POST /internal/procurement/receipts/import-by-code",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "COMPANY_ADMIN",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "GET /internal/procurement/receipts/:id",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "POST /internal/procurement/receipts",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "COMPANY_ADMIN",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "POST /internal/procurement/receipts/:id/confirm",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "COMPANY_ADMIN",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "POST /internal/procurement/receipts/:id/email",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "COMPANY_ADMIN",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "DELETE /internal/procurement/receipts/:id",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "COMPANY_ADMIN",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "GET /internal/reservations/",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "COMPANY_ADMIN",
+        "RECEPTIONIST",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "GET /internal/reservations/alerts",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "COMPANY_ADMIN",
+        "RECEPTIONIST",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "GET /internal/reservations/call-list",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "COMPANY_ADMIN",
+        "RECEPTIONIST",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "GET /internal/reservations/stream",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "COMPANY_ADMIN",
+        "RECEPTIONIST",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "GET /internal/reservations/:id",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "COMPANY_ADMIN",
+        "RECEPTIONIST",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "PATCH /internal/reservations/:id/confirm-call",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "COMPANY_ADMIN",
+        "RECEPTIONIST",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "GET /internal/reservations/:id/suggest-table",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "COMPANY_ADMIN",
+        "RECEPTIONIST",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "POST /internal/reservations/",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "COMPANY_ADMIN",
+        "RECEPTIONIST",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "PUT /internal/reservations/:id",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "COMPANY_ADMIN",
+        "RECEPTIONIST",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "PATCH /internal/reservations/:id/status",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "COMPANY_ADMIN",
+        "RECEPTIONIST",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "POST /internal/reservations/:id/assign-table",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "COMPANY_ADMIN",
+        "RECEPTIONIST",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "POST /internal/reservations/:id/checkin",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "COMPANY_ADMIN",
+        "RECEPTIONIST",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "DELETE /internal/reservations/:id",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "COMPANY_ADMIN",
+        "RECEPTIONIST",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "GET /internal/menu-categories/",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "GET /internal/menu-categories/:id",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "POST /internal/menu-categories/",
+      "audience": "internal",
+      "roles": [
+        "COMPANY_ADMIN",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "PUT /internal/menu-categories/:id",
+      "audience": "internal",
+      "roles": [
+        "COMPANY_ADMIN",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "DELETE /internal/menu-categories/:id",
+      "audience": "internal",
+      "roles": [
+        "COMPANY_ADMIN",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "GET /internal/menu-items/",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "GET /internal/menu-items/:id",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "POST /internal/menu-items/",
+      "audience": "internal",
+      "roles": [
+        "COMPANY_ADMIN",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "PUT /internal/menu-items/:id",
+      "audience": "internal",
+      "roles": [
+        "COMPANY_ADMIN",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "DELETE /internal/menu-items/:id",
+      "audience": "internal",
+      "roles": [
+        "COMPANY_ADMIN",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "GET /internal/combos/",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "GET /internal/combos/:id",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "KITCHEN",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "POST /internal/combos/",
+      "audience": "internal",
+      "roles": [
+        "COMPANY_ADMIN",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "PUT /internal/combos/:id",
+      "audience": "internal",
+      "roles": [
+        "COMPANY_ADMIN",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "DELETE /internal/combos/:id",
+      "audience": "internal",
+      "roles": [
+        "COMPANY_ADMIN",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "PATCH /internal/menu-items/:id/availability",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "COMPANY_ADMIN",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "GET /internal/companies/",
+      "audience": "internal",
+      "roles": [
+        "COMPANY_ADMIN",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "GET /internal/companies/:id",
+      "audience": "internal",
+      "roles": [
+        "COMPANY_ADMIN",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "POST /internal/companies/",
+      "audience": "internal",
+      "roles": [
+        "COMPANY_ADMIN",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "PUT /internal/companies/:id",
+      "audience": "internal",
+      "roles": [
+        "COMPANY_ADMIN",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "GET /internal/cashback-rates/",
+      "audience": "internal",
+      "roles": [
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "PUT /internal/cashback-rates/:rank",
+      "audience": "internal",
+      "roles": [
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "GET /internal/vouchers/",
+      "audience": "internal",
+      "roles": [
+        "COMPANY_ADMIN",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "GET /internal/vouchers/:id",
+      "audience": "internal",
+      "roles": [
+        "COMPANY_ADMIN",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "POST /internal/vouchers/",
+      "audience": "internal",
+      "roles": [
+        "COMPANY_ADMIN",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "PUT /internal/vouchers/:id",
+      "audience": "internal",
+      "roles": [
+        "COMPANY_ADMIN",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "DELETE /internal/vouchers/:id",
+      "audience": "internal",
+      "roles": [
+        "COMPANY_ADMIN",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "POST /internal/vouchers/:id/assign",
+      "audience": "internal",
+      "roles": [
+        "COMPANY_ADMIN",
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "POST /internal/customers/:id/points",
+      "audience": "internal",
+      "roles": [
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "GET /internal/home-banners/",
+      "audience": "internal",
+      "roles": [
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "POST /internal/home-banners/",
+      "audience": "internal",
+      "roles": [
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "DELETE /internal/home-banners/:id",
+      "audience": "internal",
+      "roles": [
+        "SUPER_ADMIN"
+      ]
+    },
+    {
+      "id": "POST /internal/qr-payment/request",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "RECEPTIONIST",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "GET /internal/qr-payment/status/:requestId",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "RECEPTIONIST",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    },
+    {
+      "id": "POST /internal/qr-payment/cancel",
+      "audience": "internal",
+      "roles": [
+        "BRANCH_MANAGER",
+        "CASHIER",
+        "COMPANY_ADMIN",
+        "RECEPTIONIST",
+        "SUPER_ADMIN",
+        "WAITER"
+      ]
+    }
+  ]
+}

@@ -29,9 +29,21 @@ exports.getIngredient = async (id, companyId, branchId) => {
   return ing;
 };
 
-exports.createIngredient = (companyId, branchId, data) => repo.insertIngredient(companyId, branchId, data);
+async function assertBranchCompany(branchId, companyId) {
+  if (branchId == null) return;
+  const branch = await repo.findBranchById(branchId);
+  if (!branch || branch.company_id !== companyId) {
+    throw new BadRequest("Chi nhánh không tồn tại hoặc không thuộc công ty");
+  }
+}
+
+exports.createIngredient = async (companyId, branchId, data) => {
+  await assertBranchCompany(branchId, companyId);
+  return repo.insertIngredient(companyId, branchId, data);
+};
 
 exports.updateIngredient = async (id, companyId, branchId, data) => {
+  await assertBranchCompany(branchId, companyId);
   const ing = await repo.updateIngredient(id, companyId, branchId, data);
   if (!ing) throw new NotFound("Không tìm thấy nguyên liệu");
   return ing;
@@ -64,8 +76,8 @@ exports.setRecipe = async (menuItemId, companyId, items) => {
   return exports.getRecipeByMenuItem(menuItemId, companyId);
 };
 
-exports.deleteRecipeLine = async (recipeId) => {
-  const del = await repo.deleteRecipeLine(recipeId);
+exports.deleteRecipeLine = async (recipeId, companyId) => {
+  const del = await repo.deleteRecipeLine(recipeId, companyId);
   if (!del) throw new NotFound("Không tìm thấy dòng công thức");
 };
 
@@ -77,6 +89,8 @@ exports.createStockTransaction = async (companyId, branchId, createdBy, data) =>
   if (direction === undefined) {
     throw new BadRequest(`Loại phiếu không hợp lệ. Cho phép: ${Object.keys(MANUAL_TYPES).join(", ")}`);
   }
+
+  await assertBranchCompany(branchId, companyId);
 
   let delta;
   if (type === "STOCK_COUNT") {

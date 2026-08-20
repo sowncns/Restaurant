@@ -29,11 +29,19 @@ qrEvents.setMaxListeners(0); // nhieu ket noi SSE dong thoi
 exports.qrEvents = qrEvents;
 
 
-async function settle(customerId, { amount, invoiceId, tableId, restaurantName }) {
-  const payAmount = parseFloat(amount);
+async function settle(customerId, { invoiceId, companyId, branchId, restaurantName }) {
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
+
+    const invoice = await repo.lockInvoiceForPayment(client, invoiceId, companyId, branchId);
+    if (!invoice) throw new NotFound("Không tìm thấy hóa đơn.");
+    if (invoice.status !== "UNPAID") throw new BadRequest("Hóa đơn đã được xử lý.");
+    if (invoice.customer_id && String(invoice.customer_id) !== String(customerId)) {
+      throw new BadRequest("Hóa đơn không thuộc về khách hàng này.");
+    }
+    const payAmount = parseFloat(invoice.amount);
+    const tableId = invoice.table_id;
 
     const wallet = await repo.lockWallet(client, customerId);
     if (!wallet) throw new NotFound("Không tìm thấy ví của khách hàng.");
@@ -53,13 +61,11 @@ async function settle(customerId, { amount, invoiceId, tableId, restaurantName }
       description: `Thanh toán hóa đơn qua QR tại ${restaurantName}`,
     });
 
-    if (invoiceId) {
-      await repo.markInvoicePaid(client, invoiceId, customerId);
-      await applyCashback(client, invoiceId); // hoan tien theo hang
-      await repo.completeOrders(client, tableId);
-      await repo.setTableStatus(client, tableId, "SERVING");
-      await redisClient.del(INTENT_KEY(tableId));
-    }
+    await repo.markInvoicePaid(client, invoiceId, customerId);
+    await applyCashback(client, invoiceId); // hoan tien theo hang
+    await repo.completeOrders(client, tableId);
+    await repo.setTableStatus(client, tableId, "SERVING");
+    await redisClient.del(INTENT_KEY(tableId));
 
     await client.query("COMMIT");
   } catch (err) {
@@ -70,13 +76,12 @@ async function settle(customerId, { amount, invoiceId, tableId, restaurantName }
   }
 
 
-  if (invoiceId) {
-    void sendVatInvoiceEmail({ tableId, invoiceId });
-    try {
-      await addPointsAndProcessRank(customerId, payAmount);
-    } catch (e) {
-      logger.error({ err: e }, "Lỗi cộng điểm sau thanh toán QR");
-    }
+  void sendVatInvoiceEmail({ invoiceId });
+  try {
+    const invoice = await pool.query("SELECT amount FROM invoices WHERE invoice_id = $1", [invoiceId]);
+    await addPointsAndProcessRank(customerId, parseFloat(invoice.rows[0].amount));
+  } catch (e) {
+    logger.error({ err: e }, "Lỗi cộng điểm sau thanh toán QR");
   }
 }
 
@@ -187,9 +192,9 @@ exports.confirmPayment = async (customerId, requestId, action, pin) => {
     await verifyPaymentPin(customerId, pin); // xac thuc PIN truoc khi tru tien
 
     await settle(customerId, {
-      amount: data.amount,
       invoiceId: data.invoiceId,
-      tableId: data.tableId,
+      companyId: data.companyId,
+      branchId: data.branchId,
       restaurantName: data.restaurantName,
     });
 
@@ -231,28 +236,61 @@ exports.getInvoiceById = async (customerId, invoiceId) => {
 };
 
 // ============ NHAN VIEN ============
-exports.requestPayment = async (branchId, customerId, amount, tableId, invoiceId = null) => {
-  if (!customerId || !amount || !tableId) {
+exports.requestPayment = async (user, customerId, amount, tableId, invoiceId = null) => {
+  if (!customerId || !invoiceId) {
     throw new BadRequest("Thiếu thông tin yêu cầu thanh toán (customerId, amount, tableId)");
   }
 
-  const restaurantName = await repo.findRestaurantName(branchId);
+  const client = await pool.connect();
+  let invoice;
+  try {
+    await client.query("BEGIN");
+    invoice = await repo.lockInvoiceForPayment(client, invoiceId, user.company_id, user.branch_id);
+    if (!invoice) throw new NotFound("Không tìm thấy hóa đơn.");
+    if (invoice.status !== "UNPAID") throw new BadRequest("Hóa đơn đã được xử lý.");
+    await client.query("COMMIT");
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
+  if (!invoice.customer_id) throw new BadRequest("Hóa đơn chưa được gắn với khách hàng.");
+  const scopedCustomerId = invoice.customer_id;
+  const restaurantName = await repo.findRestaurantName(invoice.branch_id);
 
   // TH1: Khach quet token (PAY-...) -> tru tien ngay
   if (String(customerId).startsWith("PAY-")) {
     const realCustomerId = await redisClient.get(TOKEN_KEY(customerId));
     if (!realCustomerId) throw new BadRequest("Mã thanh toán không hợp lệ hoặc đã hết hạn.");
+    if (String(realCustomerId) !== String(scopedCustomerId)) {
+      throw new BadRequest("Mã thanh toán không thuộc khách hàng trên hóa đơn.");
+    }
 
-    await settle(realCustomerId, { amount, invoiceId, tableId, restaurantName });
+    await settle(realCustomerId, {
+      invoiceId,
+      companyId: invoice.company_id,
+      branchId: invoice.branch_id,
+      restaurantName,
+    });
     await redisClient.del(TOKEN_KEY(customerId));
 
     const fakeRequestId = randomUUID();
-    await redisClient.set(REQ_KEY(fakeRequestId), JSON.stringify({ status: "SUCCESS" }), { EX: 60 });
+    await redisClient.set(REQ_KEY(fakeRequestId), JSON.stringify({
+      status: "SUCCESS",
+      tableId: invoice.table_id,
+      companyId: invoice.company_id,
+      branchId: invoice.branch_id,
+    }), { EX: 60 });
     return fakeRequestId;
   }
 
+  if (String(scopedCustomerId) !== String(customerId)) {
+    throw new BadRequest("Hóa đơn không thuộc về khách hàng này.");
+  }
+
   // TH2: Push xuong app khach (khach tu xac nhan)
-  const customer = await repo.findCustomerByIdOrPhone(customerId);
+  const customer = await repo.findCustomerByIdOrPhone(scopedCustomerId);
   if (!customer) throw new BadRequest("Không tìm thấy khách hàng này trong hệ thống.");
   const realCustomerId = customer.id;
 
@@ -260,9 +298,11 @@ exports.requestPayment = async (branchId, customerId, amount, tableId, invoiceId
   const paymentData = {
     requestId,
     customerId: realCustomerId,
-    amount,
-    tableId,
+    amount: invoice.amount,
+    tableId: invoice.table_id,
     invoiceId,
+    companyId: invoice.company_id,
+    branchId: invoice.branch_id,
     restaurantName,
     status: "PENDING",
     createdAt: Date.now(),
@@ -273,16 +313,24 @@ exports.requestPayment = async (branchId, customerId, amount, tableId, invoiceId
   return requestId;
 };
 
-exports.getPaymentStatus = async (requestId) => {
+exports.getPaymentStatus = async (user, requestId) => {
   const dataStr = await redisClient.get(REQ_KEY(requestId));
   if (!dataStr) throw new NotFound("Yêu cầu thanh toán không tồn tại hoặc đã hết hạn.");
-  return JSON.parse(dataStr);
+  const data = JSON.parse(dataStr);
+  if (String(data.companyId) !== String(user.company_id) || String(data.branchId) !== String(user.branch_id)) {
+    throw new NotFound("Yêu cầu thanh toán không tồn tại hoặc đã hết hạn.");
+  }
+  return data;
 };
 
-exports.cancelPayment = async (requestId) => {
+exports.cancelPayment = async (user, requestId) => {
   const dataStr = await redisClient.get(REQ_KEY(requestId));
   if (!dataStr) return;
   const data = JSON.parse(dataStr);
+  if (String(data.companyId) !== String(user.company_id) || String(data.branchId) !== String(user.branch_id)) {
+    throw new NotFound("Yêu cầu thanh toán không tồn tại hoặc đã hết hạn.");
+  }
+  if (data.status !== "PENDING") throw new BadRequest("Yêu cầu này đã được xử lý.");
   data.status = "REJECTED";
   await redisClient.set(REQ_KEY(requestId), JSON.stringify(data), { EX: 10 });
   if (data.customerId) await redisClient.del(PENDING_KEY(data.customerId));

@@ -24,6 +24,7 @@ exports.createCombo = async (companyId, data) => {
   } catch (e) {
     if (e.code === "23505") throw new Conflict("Mã combo đã tồn tại trong công ty này");
     if (e.code === "23503") throw new Conflict("Một hoặc nhiều món ăn không tồn tại");
+    if (e.code === "P0001") throw new Conflict("Combo chỉ được chứa món ăn thuộc cùng công ty");
     throw e;
   }
 };
@@ -38,6 +39,7 @@ exports.updateCombo = async (id, companyId, data) => {
   } catch (e) {
     if (e.code === "23505") throw new Conflict("Mã combo đã tồn tại");
     if (e.code === "23503") throw new Conflict("Một hoặc nhiều món ăn không tồn tại");
+    if (e.code === "P0001") throw new Conflict("Combo chỉ được chứa món ăn thuộc cùng công ty");
     throw e;
   }
 };

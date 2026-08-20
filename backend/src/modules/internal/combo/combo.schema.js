@@ -8,8 +8,8 @@ const comboItemSchema = z.object({
 
 exports.createComboSchema = z.object({
   company_id: z.coerce.number().int().positive().optional(),
-  combo_code: z.string().trim().max(50),
-  name: z.string().trim().max(150),
+  combo_code: z.string().trim().min(1, "Mã combo không được để trống").max(50),
+  name: z.string().trim().min(1, "Tên combo không được để trống").max(150),
   description: z.string().trim().optional(),
   image_url: z.string().trim().optional(),
   price: z.coerce.number().min(0),
@@ -18,8 +18,8 @@ exports.createComboSchema = z.object({
 
 exports.updateComboSchema = z.object({
   company_id: z.coerce.number().int().positive().optional(),
-  combo_code: z.string().trim().max(50).optional(),
-  name: z.string().trim().max(150).optional(),
+  combo_code: z.string().trim().min(1, "Mã combo không được để trống").max(50).optional(),
+  name: z.string().trim().min(1, "Tên combo không được để trống").max(150).optional(),
   description: z.string().trim().optional(),
   image_url: z.string().trim().optional(),
   price: z.coerce.number().min(0).optional(),

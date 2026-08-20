@@ -48,6 +48,11 @@ exports.findIngredientById = (id, companyId, branchId) =>
             WHERE i.ingredient_id = $1 AND i.company_id = $2`, [id, companyId, branchId])
     .then((r) => r.rows[0]);
 
+exports.findBranchById = (branchId) =>
+  pool
+    .query("SELECT branch_id AS id, company_id FROM branches WHERE branch_id = $1", [branchId])
+    .then((r) => r.rows[0]);
+
 exports.insertIngredient = async (companyId, branchId, d) => {
   const client = await pool.connect();
   try {
@@ -164,8 +169,16 @@ exports.replaceRecipe = async (menuItemId, items) => {
   }
 };
 
-exports.deleteRecipeLine = (recipeId) =>
-  pool.query("DELETE FROM recipes WHERE recipe_id = $1 RETURNING recipe_id AS id", [recipeId]).then((r) => r.rows[0]);
+exports.deleteRecipeLine = (recipeId, companyId) =>
+  pool
+    .query(
+      `DELETE FROM recipes r
+       USING menu_items mi
+       WHERE r.recipe_id = $1 AND mi.menu_item_id = r.menu_item_id AND mi.company_id = $2
+       RETURNING r.recipe_id AS id`,
+      [recipeId, companyId]
+    )
+    .then((r) => r.rows[0]);
 
 // ================= INVENTORY TRANSACTIONS =================
 exports.applyStockChange = async ({ ingredientId, companyId, branchId, delta, type, referenceType, referenceId, note, createdBy }) => {

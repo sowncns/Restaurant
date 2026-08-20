@@ -6,9 +6,11 @@ exports.list = asyncHandler(async (req, res) => {
   const { action, entityType, actorId, from, to } = req.query;
   // SUPER_ADMIN xem toan bo; con lai gioi han trong cong ty cua minh.
   const companyId = req.user.role === "SUPER_ADMIN" ? null : req.user.company_id;
+  const branchId = req.user.role === "BRANCH_MANAGER" ? req.user.branch_id : null;
   const limit = Math.min(Math.max(Number(req.query.limit) || 100, 1), 500);
   const page = Math.max(Number(req.query.page) || 1, 1);
   const { rows: logs, total } = await audit.query(companyId, {
+    branchId,
     action,
     entityType,
     actorId: actorId ? Number(actorId) : undefined,

@@ -31,20 +31,31 @@ exports.deleteSupplier = async (id, companyId) => {
 };
 
 // ---------- Purchase receipts ----------
-exports.listReceipts = (companyId, filters) => repo.findReceipts(companyId, filters);
+exports.listReceipts = (companyId, branchId, filters) => repo.findReceipts(companyId, branchId, filters);
 
-exports.getReceipt = async (id, companyId) => {
-  const receipt = await repo.findReceiptById(id, companyId);
+exports.getReceipt = async (id, companyId, branchId) => {
+  const receipt = await repo.findReceiptById(id, companyId, branchId);
   if (!receipt) throw new NotFound("Không tìm thấy phiếu nhập");
   const items = await repo.findReceiptItems(id);
   return { ...receipt, items };
 };
 
-exports.createReceipt = async (companyId, createdBy, data) => {
+async function assertBranchCompany(branchId, companyId) {
+  if (branchId == null) return;
+  const branch = await repo.findBranchById(branchId);
+  if (!branch || branch.company_id !== companyId) {
+    throw new BadRequest("Chi nhánh không tồn tại hoặc không thuộc công ty");
+  }
+}
+
+exports.createReceipt = async (companyId, branchScopeId, createdBy, data) => {
   // NCC phai thuoc cong ty & con hoat dong
   const supplier = await repo.findSupplierById(data.supplier_id, companyId);
   if (!supplier) throw new BadRequest("Nhà cung cấp không tồn tại");
   if (supplier.status !== "ACTIVE") throw new BadRequest("Nhà cung cấp đã ngưng hoạt động");
+
+  const branchId = branchScopeId ?? data.branch_id ?? null;
+  await assertBranchCompany(branchId, companyId);
 
   // Nguyen lieu phai thuoc cung cong ty; tinh line_amount.
   const items = [];
@@ -63,7 +74,7 @@ exports.createReceipt = async (companyId, createdBy, data) => {
 
   const header = {
     supplier_id: data.supplier_id,
-    branch_id: data.branch_id ?? null,
+    branch_id: branchId,
     receipt_code: data.receipt_code || `PN-${Date.now()}`,
     receipt_date: data.receipt_date ?? null,
     note: data.note ?? null,
@@ -77,45 +88,50 @@ exports.createReceipt = async (companyId, createdBy, data) => {
     if (e.code === "23505") throw new Conflict("Mã phiếu nhập đã tồn tại");
     throw e;
   }
-  return exports.getReceipt(id, companyId);
+  return exports.getReceipt(id, companyId, branchScopeId);
 };
 
-exports.confirmReceipt = async (id, companyId, staffId) => {
-  const result = await repo.confirmReceipt(id, companyId, staffId);
+exports.confirmReceipt = async (id, companyId, branchId, staffId) => {
+  const existing = await repo.findReceiptById(id, companyId, branchId);
+  if (!existing) throw new NotFound("Không tìm thấy phiếu nhập");
+  await assertBranchCompany(existing.branch_id, companyId);
+  const result = await repo.confirmReceipt(id, companyId, branchId, staffId);
   if (result.error === "NOT_FOUND") throw new NotFound("Không tìm thấy phiếu nhập");
   if (result.error === "NOT_DRAFT") throw new BadRequest(`Phiếu đã ở trạng thái ${result.status}, không thể xác nhận`);
   if (result.error === "NO_BRANCH") throw new BadRequest("Phiếu nhập chưa gắn chi nhánh. Vui lòng cập nhật chi nhánh trước khi xác nhận");
   if (result.error === "INGREDIENT_NOT_FOUND") throw new BadRequest(`Nguyên liệu #${result.ingredientId} không hợp lệ`);
-  return exports.getReceipt(id, companyId);
+  return exports.getReceipt(id, companyId, branchId);
 };
 
-exports.getReceiptByCode = async (code, companyId) => {
-  const receipt = await repo.findReceiptByCode(code, companyId);
+exports.getReceiptByCode = async (code, companyId, branchId) => {
+  const receipt = await repo.findReceiptByCode(code, companyId, branchId);
   if (!receipt) throw new NotFound("Không tìm thấy phiếu nhập với mã này");
   const items = await repo.findReceiptItems(receipt.id);
   return { ...receipt, items };
 };
 
-exports.importReceiptByCode = async (code, companyId, branchId, staffId) => {
-  const receipt = await repo.findReceiptByCode(code, companyId);
+exports.importReceiptByCode = async (code, companyId, branchScopeId, requestedBranchId, staffId) => {
+  const receipt = await repo.findReceiptByCode(code, companyId, branchScopeId);
   if (!receipt) throw new NotFound("Không tìm thấy phiếu nhập với mã này");
-  const result = await repo.importReceipt(receipt.id, companyId, branchId, staffId);
+  const branchId = branchScopeId ?? requestedBranchId ?? receipt.branch_id;
+  await assertBranchCompany(branchId, companyId);
+  const result = await repo.importReceipt(receipt.id, companyId, branchScopeId, branchId, staffId);
   if (result.error === "ALREADY_IMPORTED") throw new BadRequest("Phiếu này đã được nhập kho, không thể nhập lại");
   if (result.error === "CANCELLED") throw new BadRequest("Phiếu này đã bị hủy");
   if (result.error === "NO_BRANCH") throw new BadRequest("Không xác định được chi nhánh để nhập kho. Vui lòng chỉ định chi nhánh");
-  return { ...result, receipt: await exports.getReceipt(receipt.id, companyId) };
+  return { ...result, receipt: await exports.getReceipt(receipt.id, companyId, branchScopeId) };
 };
 
-exports.cancelReceipt = async (id, companyId) => {
-  const existing = await repo.findReceiptById(id, companyId);
+exports.cancelReceipt = async (id, companyId, branchId) => {
+  const existing = await repo.findReceiptById(id, companyId, branchId);
   if (!existing) throw new NotFound("Không tìm thấy phiếu nhập");
   if (existing.status !== "DRAFT") throw new BadRequest("Chỉ hủy được phiếu ở trạng thái nháp (DRAFT)");
-  await repo.cancelReceipt(id, companyId);
-  return exports.getReceipt(id, companyId);
+  await repo.cancelReceipt(id, companyId, branchId);
+  return exports.getReceipt(id, companyId, branchId);
 };
 
-exports.emailReceipt = async (id, companyId) => {
-  const receipt = await exports.getReceipt(id, companyId);
+exports.emailReceipt = async (id, companyId, branchId) => {
+  const receipt = await exports.getReceipt(id, companyId, branchId);
   if (!receipt) throw new NotFound("Không tìm thấy phiếu nhập");
 
   // supplier_email da có sẵn trong receipt (JOIN suppliers trong query)

@@ -10,6 +10,8 @@ const cid = (req) => {
   return req.user.role === "SUPER_ADMIN" && override ? override : req.user.company_id;
 };
 
+const branchScope = (req) => req.user.role === "BRANCH_MANAGER" ? req.user.branch_id : null;
+
 // ---------- Suppliers ----------
 exports.listSuppliers = asyncHandler(async (req, res) => {
   const { status, search } = req.query;
@@ -40,7 +42,7 @@ exports.deleteSupplier = asyncHandler(async (req, res) => {
 // ---------- Purchase receipts ----------
 exports.listReceipts = asyncHandler(async (req, res) => {
   const { status, supplierId, limit } = req.query;
-  const receipts = await service.listReceipts(cid(req), {
+  const receipts = await service.listReceipts(cid(req), branchScope(req), {
     status,
     supplierId: supplierId ? Number(supplierId) : undefined,
     limit: limit ? Math.min(Number(limit), 500) : 100,
@@ -49,19 +51,18 @@ exports.listReceipts = asyncHandler(async (req, res) => {
 });
 
 exports.getReceipt = asyncHandler(async (req, res) => {
-  const receipt = await service.getReceipt(parseId(req.params.id, "receipt id"), cid(req));
+  const receipt = await service.getReceipt(parseId(req.params.id, "receipt id"), cid(req), branchScope(req));
   res.json({ message: "Lấy phiếu nhập thành công", receipt });
 });
 
 exports.createReceipt = asyncHandler(async (req, res) => {
-  const receipt = await service.createReceipt(cid(req), req.user.id, req.body);
+  const receipt = await service.createReceipt(cid(req), branchScope(req), req.user.id, req.body);
   res.status(201).json({ message: "Tạo phiếu nhập thành công", receipt });
 });
 
 exports.confirmReceipt = asyncHandler(async (req, res) => {
   const id = parseId(req.params.id, "receipt id");
-  console.log("id", id);
-  const receipt = await service.confirmReceipt(id, cid(req), req.user.id);
+  const receipt = await service.confirmReceipt(id, cid(req), branchScope(req), req.user.id);
 
   audit.record(audit.ctx(req), {
     action: "CONFIRM", entityType: "PURCHASE_RECEIPT", entityId: id,
@@ -74,15 +75,15 @@ exports.confirmReceipt = asyncHandler(async (req, res) => {
 exports.getReceiptByCode = asyncHandler(async (req, res) => {
   const { code } = req.params;
   if (!code) throw BadRequest("Thiếu mã phiếu");
-  const receipt = await service.getReceiptByCode(code, cid(req));
+  const receipt = await service.getReceiptByCode(code, cid(req), branchScope(req));
   res.json({ message: "Lấy phiếu nhập theo mã thành công", receipt });
 });
 
 exports.importReceiptByCode = asyncHandler(async (req, res) => {
   const { code } = req.body;
   if (!code) throw BadRequest("Thiếu mã phiếu");
-  const branchId = req.body.branchId ? Number(req.body.branchId) : (req.user.branch_id || null);
-  const result = await service.importReceiptByCode(code, cid(req), branchId, req.user.id);
+  const branchId = req.body.branchId ? Number(req.body.branchId) : null;
+  const result = await service.importReceiptByCode(code, cid(req), branchScope(req), branchId, req.user.id);
   audit.record(audit.ctx(req), {
     action: "IMPORT", entityType: "PURCHASE_RECEIPT", entityId: result.receipt.id,
     description: `Nhập kho theo phiếu ${code}`,
@@ -92,12 +93,12 @@ exports.importReceiptByCode = asyncHandler(async (req, res) => {
 });
 
 exports.cancelReceipt = asyncHandler(async (req, res) => {
-  const receipt = await service.cancelReceipt(parseId(req.params.id, "receipt id"), cid(req));
+  const receipt = await service.cancelReceipt(parseId(req.params.id, "receipt id"), cid(req), branchScope(req));
   res.json({ message: "Đã hủy phiếu nhập", receipt });
 });
 
 exports.emailReceipt = asyncHandler(async (req, res) => {
   const id = parseId(req.params.id, "receipt id");
-  const result = await service.emailReceipt(id, cid(req));
+  const result = await service.emailReceipt(id, cid(req), branchScope(req));
   res.json(result);
 });

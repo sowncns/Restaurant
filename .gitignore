@@ -13,6 +13,7 @@ dist/
 build/
 **/dist/
 **/build/
+e2e/artifacts/
 .next/
 **/.next/
 
@@ -28,3 +29,4 @@ __pycache__/
 # IDE & office temp
 .idea/
 ~$*
+api-tests/

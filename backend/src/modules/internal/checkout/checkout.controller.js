@@ -54,48 +54,48 @@ exports.createInvoice = asyncHandler(async (req, res) => {
 
 exports.scanCustomerQR = asyncHandler(async (req, res) => {
   const { tableId, token } = req.body;
-  const result = await service.scanCustomerQR(tableId, token);
+  const result = await service.scanCustomerQR(req.user, tableId, token);
   res.json({ message: "Quét mã thành công", data: result });
 });
 
 exports.getCheckoutIntent = asyncHandler(async (req, res) => {
-  const result = await service.getCheckoutIntent(req.params.tableId);
+  const result = await service.getCheckoutIntent(req.user, req.params.tableId);
   res.json(result);
 });
 
 exports.cancelCheckoutIntent = asyncHandler(async (req, res) => {
-  await service.cancelCheckoutIntent(req.params.tableId);
+  await service.cancelCheckoutIntent(req.user, req.params.tableId);
   res.json({ message: "Đã hủy yêu cầu thanh toán thành công" });
 });
 
 exports.validateVoucher = asyncHandler(async (req, res) => {
   const { code, orderTotal, tableId, customerRef } = req.body;
-  const result = await service.validateVoucher(code, orderTotal, tableId, customerRef);
+  const result = await service.validateVoucher(req.user, code, orderTotal, tableId, customerRef);
   res.json({ message: "Áp dụng voucher thành công", data: result });
 });
 
 exports.getTableVoucher = asyncHandler(async (req, res) => {
-  const result = await service.getTableVoucher(req.params.tableId);
+  const result = await service.getTableVoucher(req.user, req.params.tableId);
   res.json(result);
 });
 
 exports.getLatestInvoice = asyncHandler(async (req, res) => {
-  const result = await service.getLatestInvoice(req.params.tableId);
+  const result = await service.getLatestInvoice(req.user, req.params.tableId);
   res.json(result);
 });
 
 exports.getKiemMon = asyncHandler(async (req, res) => {
-  const result = await service.getKiemMon(req.params.tableId);
+  const result = await service.getKiemMon(req.user, req.params.tableId);
   res.json(result);
 });
 
 exports.saveTableVat = asyncHandler(async (req, res) => {
-  await service.saveTableVat(req.params.tableId, req.body);
+  await service.saveTableVat(req.user, req.params.tableId, req.body);
   res.json({ message: "Lưu thông tin VAT thành công" });
 });
 
 exports.getTableVat = asyncHandler(async (req, res) => {
-  const result = await service.getTableVat(req.params.tableId);
+  const result = await service.getTableVat(req.user, req.params.tableId);
   res.json(result);
 });
 
@@ -105,6 +105,6 @@ exports.listInvoices = asyncHandler(async (req, res) => {
 });
 
 exports.markInvoicePaid = asyncHandler(async (req, res) => {
-  const result = await service.markInvoicePaid(req.params.invoiceId);
+  const result = await service.markInvoicePaid(req.user, req.params.invoiceId);
   res.json(result);
 });

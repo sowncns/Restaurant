@@ -11,6 +11,7 @@ export interface Category {
 
 export interface MenuItem {
   menu_item_id: number
+  company_id: number
   category_id: number
   kitchen_type_id: number
   name: string
@@ -46,8 +47,9 @@ export const menuApi = {
     await api.delete(`/internal/menu-categories/${id}`, { params })
   },
 
-  async listItems(): Promise<MenuItem[]> {
-    const { data } = await api.get('/internal/menu-items')
+  async listItems(companyId?: number | ''): Promise<MenuItem[]> {
+    const params = companyId ? { company_id: companyId } : undefined
+    const { data } = await api.get('/internal/menu-items', { params })
     return data.items
   },
   async createItem(body: Partial<MenuItem>): Promise<MenuItem> {

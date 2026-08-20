@@ -9,7 +9,9 @@
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
     "build": "webpack --mode production",
-    "lint": "eslint ."
+    "migrate": "node scripts/migrate.js",
+    "lint": "eslint .",
+    "test": "node --require ./test/setup-env.js --test --test-concurrency=1 test/*.test.js"
   },
   "dependencies": {
     "@payos/node": "^1.0.10",

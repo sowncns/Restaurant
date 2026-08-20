@@ -77,7 +77,8 @@ exports.setRecipe = asyncHandler(async (req, res) => {
 });
 
 exports.deleteRecipeLine = asyncHandler(async (req, res) => {
-  await service.deleteRecipeLine(parseId(req.params.id, "recipe id"));
+  const { cId } = getInventoryContext(req);
+  await service.deleteRecipeLine(parseId(req.params.id, "recipe id"), cId);
   res.json({ message: "Đã xóa dòng công thức" });
 });
 

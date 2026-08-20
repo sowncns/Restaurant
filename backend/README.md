@@ -72,30 +72,22 @@ Quy tắc cấp vai trò: chỉ được cấp/quản lý nhân viên có vai tr
 
 ---
 
-## 5. Tiến độ chức năng
+## 5. Trạng thái hiện tại
 
-**Tất cả 20/20 chức năng đã hoàn thiện.**
+Không dùng số đếm “hoàn thành” cho repository này. Route và service đã được triển khai cho auth/RBAC, chi nhánh, bàn, menu, order/bếp, checkout, kho, procurement, reservation, combo, voucher, báo cáo, audit và payment. Sự tồn tại của code không chứng minh migration đã chạy, provider đã cấu hình hoặc luồng tích hợp đã đạt.
 
-### ✅ Đã hoàn thành
-- [x] Quản lý chi nhánh (`internal/branch` – CRUD, xóa mềm, lọc theo phạm vi)
-- [x] Quản lý bàn ăn + khu vực (`internal/tables`)
-- [x] Quản lý menu (đọc/đặt món)
-- [x] Khuyến mãi – voucher (`customer/voucher` + validate ở checkout)
-- [x] POS bán / gọi món (`internal/order` – gồm hàng bếp)
-- [x] Thanh toán (PayOS + QR nội bộ + webhook)
-- [x] Tạo hóa đơn + VAT (`internal/checkout`) – *dữ liệu sẵn, việc in do frontend*
-- [x] Quản lý kho nguyên liệu (`internal/inventory` – nguyên liệu, định lượng, giao dịch kho)
-- [x] Quản lý nhân viên (`internal/employee` – CRUD đầy đủ)
-- [x] Phân quyền theo vai trò & phạm vi chi nhánh
-- [x] API công khai (`public` – công ty, chi nhánh, thực đơn)
-- [x] Báo cáo doanh thu (`internal/report` – theo ngày/tháng, lọc theo chi nhánh)
-- [x] Báo cáo món bán chạy (`internal/report`)
-- [x] Dashboard tổng hợp KPI (`internal/report`)
-- [x] **Đặt bàn** (`internal/reservation` – CRUD, đổi trạng thái, check-in gán bàn, hủy; lọc theo phạm vi chi nhánh)
-- [x] **Nhà cung cấp + Phiếu nhập kho** (`internal/procurement` – NCC CRUD; phiếu nhập DRAFT→CONFIRMED tự cộng tồn kho & sinh `inventory_transactions` gắn `PURCHASE_RECEIPT`)
-- [x] **Combo món** (`internal/combo` CRUD + hiển thị công khai `public` – combo giá cố định gồm nhiều món)
-- [x] **Email xác thực khi đăng ký** (`customer/auth` – gửi link xác thực, verify token, gửi lại)
-- [x] **Nhật ký hệ thống / audit log** (`shared/services/audit.service` + đọc qua `internal/audit-logs`; ghi log login, thao tác nhân viên, xác nhận phiếu nhập, đặt bàn, combo)
+Phân loại bằng chứng hiện tại:
+
+- **Automated cục bộ:** `npm test` chạy các test Node ở `test/*.test.js`; chúng kiểm tra helper/middleware RBAC và một số nhánh service với repository mock.
+- **Chưa được automated integration chứng minh:** PostgreSQL/Redis, HTTP API thật, Supabase Auth/Realtime, PayOS, email, migration từ database rỗng và concurrency.
+- **Acceptance thủ công đang chờ chạy:** recipe và runbook ở `../scripts/demo/acceptance-data.json`, `../scripts/demo/validate-acceptance-data.js` và `../docs/ACCEPTANCE_SETUP.md`.
+
+Các ranh giới dễ hiểu nhầm:
+
+- Không có customer cart API hoặc bảng cart. Màn hình frontend mang tên `DeliveryMenu` chỉ giữ lựa chọn trong React state rồi chuyển sang `/booking` dưới dạng preorder; repository chưa triển khai giao hàng, địa chỉ giao hàng hay fulfillment.
+- Khách đăng nhập có thể tạo reservation kèm `items[]`; khách vãng lai dùng `POST /api/public/reservations` và không preorder. Bàn chỉ được gán/check-in ở luồng nội bộ.
+- Combo có CRUD nội bộ và tham gia order dưới dạng một dòng cha tính tiền cùng các dòng con đưa bếp. Public menu có thể gộp combo vào kết quả menu, nhưng không có endpoint public `/combos` riêng.
+- Realtime vận hành theo chuỗi Supabase Postgres Changes → backend EventEmitter → SSE. Nó chỉ theo dõi `order_items` và `reservations`; QR customer dùng SSE EventEmitter riêng. Polling vẫn là backstop ở một số frontend. Chưa có evidence tích hợp Supabase/RLS trong repository.
 
 ---
 
@@ -113,8 +105,8 @@ Quy tắc cấp vai trò: chỉ được cấp/quản lý nhân viên có vai tr
 | GET | `/companies/:companyId/categories` | Danh mục món |
 | GET | `/companies/:companyId/menu` | Thực đơn (gom theo danh mục) |
 | GET | `/menu-items/:menuItemId` | Chi tiết món |
-| GET | `/companies/:companyId/combos` | Danh sách combo của công ty |
-| GET | `/combos/:comboId` | Chi tiết combo (kèm món thành phần) |
+| POST | `/reservations` | Đặt bàn khách vãng lai, không hỗ trợ preorder |
+| GET | `/home-banners` | Banner công khai |
 
 ### 6.2. Customer Auth — `/api/customer/auth` 🔑
 | Method | Path | Chức năng |
@@ -137,7 +129,7 @@ Quy tắc cấp vai trò: chỉ được cấp/quản lý nhân viên có vai tr
 | GET | `/transactions` | Lịch sử giao dịch ví |
 | POST | `/setup-pin` | Thiết lập mã PIN thanh toán |
 | POST | `/verify-pin` | Xác thực PIN |
-| POST | `/add-points` | Cộng điểm |
+| POST | `/reset-pin-by-password` | Đặt lại PIN sau khi xác thực mật khẩu |
 
 ### 6.5. Customer Voucher & Payment 🔑
 | Method | Path | Chức năng |
@@ -159,8 +151,10 @@ Quy tắc cấp vai trò: chỉ được cấp/quản lý nhân viên có vai tr
 | Method | Path | Chức năng |
 |--------|------|-----------|
 | GET | `/pending` | Yêu cầu thanh toán đang chờ |
+| GET | `/stream` | SSE báo thay đổi yêu cầu thanh toán trong process backend hiện tại |
 | POST | `/confirm` | Xác nhận thanh toán |
 | POST | `/generate-token` | Tạo token thanh toán |
+| POST | `/scan-token` | Tạo QR thành viên/voucher để nhân viên quét |
 | GET | `/invoices` | Lịch sử hóa đơn |
 | GET | `/invoices/:id` | Chi tiết hóa đơn |
 
@@ -218,6 +212,10 @@ Quy tắc cấp vai trò: chỉ được cấp/quản lý nhân viên có vai tr
 |--------|------|-----------|
 | POST | `/` | Tạo order |
 | GET | `/kitchen/queue` | Hàng chờ bếp |
+| GET | `/kitchen/stream` | SSE báo thay đổi `order_items` theo chi nhánh |
+| GET | `/kitchen/preorders` | Danh sách đơn đặt trước cho bếp |
+| POST | `/kitchen/preorders/:reservationId/confirm` | Bếp nhận đơn đặt trước |
+| POST | `/kitchen/preorders/:reservationId/cancel` | Bếp hủy đơn đặt trước/khởi tạo hoàn cọc |
 | GET | `/table/:tableId/active` | Order đang hoạt động của bàn |
 | GET | `/:id` | Chi tiết order |
 | PUT | `/:id/items` | Thêm món vào order |
@@ -255,6 +253,9 @@ recipes/:id` | Xóa dòng định lượng |
 | PUT | `/:id` | Cập nhật phiếu đặt (khi chưa kết thúc) |
 | PATCH | `/:id/status` | Đổi trạng thái (PENDING/CONFIRMED/CHECKED_IN/COMPLETED/CANCELLED/NO_SHOW) |
 | GET | `/alerts` | **Cảnh báo trước giờ hẹn** (trong `RESERVATION_ALERT_MINUTES`): READY / CONFLICT (đổi bàn) / NO_TABLE |
+| GET | `/stream` | SSE báo thay đổi reservation theo chi nhánh |
+| GET | `/call-list` | Danh sách cần gọi xác nhận |
+| PATCH | `/:id/confirm-call` | Ghi kết quả gọi xác nhận |
 | GET | `/:id/suggest-table` | Gợi ý bàn trống phù hợp (đủ chỗ, không trùng giờ) |
 | POST | `/:id/assign-table` | Gán bàn giữ chỗ (không khóa bàn — vẫn mở cho khách vãng lai) |
 | POST | `/:id/checkin` | Check-in: gán bàn + kích hoạt đơn đặt trước + bàn chuyển SERVING |
@@ -282,6 +283,8 @@ recipes/:id` | Xóa dòng định lượng |
 | PUT | `/:id` | Cập nhật combo / thay danh sách món |
 | DELETE | `/:id` | Ngưng sử dụng combo (xóa mềm) |
 
+> Quyền thực tế trong route: mọi role nội bộ trừ `RECEPTIONIST` có thể đọc; chỉ `SUPER_ADMIN` và `COMPANY_ADMIN` có thể tạo/sửa/xóa. Combo được trả lẫn trong public company menu, không có public combo-detail route.
+
 ### 6.12e. Internal Audit Log — `/api/internal/audit-logs` 🛡️ (quản lý trở lên)
 | Method | Path | Chức năng |
 |--------|------|-----------|
@@ -305,17 +308,19 @@ recipes/:id` | Xóa dòng định lượng |
 
 - Định dạng response chung: `{ "message": "...", <data>: ... }`.
 - Lỗi trả về qua `AppError` (400/401/403/404/409) với `{ "message": "..." }`.
-- **Migration:** chạy thủ công theo thứ tự trong `src/database/migrations/` (idempotent, chạy lại an toàn):
+- **Migration:** các file là SQL thủ công; repository không có migration ledger/runner đầy đủ và không có baseline được chứng minh tạo database rỗng. Không được suy ra rằng mọi file đều idempotent hoặc có thể chạy chỉ bằng thứ tự tên.
   - `002_supplier_purchase_reservation.sql` – `suppliers`, `purchase_receipts`, `purchase_receipt_items`, bảng/cột `reservations`.
   - `003_combo_verify_audit.sql` – `combos`, `combo_items`, `email_verification_tokens` + cột `customers.email_verified`, `audit_logs`.
   - `004_consolidate_tables.sql` – gộp bảng để gọn schema: `password_reset_tokens` + `email_verification_tokens` → **`customer_tokens`** (cột `purpose`); drop các bảng chết không dùng (`promotions`, `media_files`, `wallet_adjustments`).
   - `005_reservation_preorder.sql` – nới `orders.table_id` + `waiter_id` thành nullable để chứa đơn đặt trước (`SCHEDULED`) chưa gán bàn/nhân viên. Không thêm bảng.
   - `006_drop_staff_attribution_fks.sql` – bỏ các FK "ai thực hiện" ít giá trị (giữ cột), gọn liên kết quanh `employees`.
   - `007_reduce_redundant_fks.sql` – bỏ FK **thừa** (giữ cột) để ERD gọn: `company_id` ở `carts`, `employees`, `orders`, `purchase_receipts`, `reservations` (company suy ra qua `branches`); và attribution phát voucher. `invoices.company_id` **giữ FK** vì là bản ghi tài chính.
-  - `008_drop_cart_tables.sql` – **xóa hẳn** tính năng giỏ hàng: drop `cart_items`, `carts` (module `customer/cart` đã gỡ, chưa từng nối vào luồng đặt món). **Còn 32 bảng.**
+  - `008_drop_cart_tables.sql` – xóa `cart_items`, `carts`; frontend hiện dùng state tạm để chuyển món sang reservation preorder, không phải cart persistence hay delivery.
   - `009_drop_menu_items_company_fk.sql` – bỏ FK thừa `menu_items.company_id` (company suy ra qua `menu_categories`); giữ cột để scope multi-tenant.
-  - Vd: `psql $DATABASE_URL -f src/database/migrations/004_consolidate_tables.sql`
-  - **ERD:** sơ đồ quan hệ hiện tại xem ở `docs/erd.html` (32 bảng, có cột & khóa ngoại) hoặc `ERD.pgerd` (mở bằng pgAdmin ERD Tool).
+  - Combo có lịch sử tạo/xóa/tạo lại (`003`, `016_drop_combo`, `017`, `028`) rồi bổ sung order ở `032` và repair dữ liệu ở `033`. Phải xác định snapshot DB đích trước khi chọn script; không chạy toàn bộ theo tên một cách mù quáng.
+  - `034_enable_supabase_realtime.sql` thêm `order_items` và `reservations` vào publication nếu publication tồn tại, rồi đặt `REPLICA IDENTITY FULL`; warning publication không đồng nghĩa Realtime hoạt động.
+  - `run_migrations.js` chỉ chạy `003`, `032`, `033`, bắt lỗi và vẫn `process.exit(0)`; không phải production migration runner và không chạy `034`.
+  - Kiến trúc và quan hệ nghiệp vụ hiện tại: `../docs/CURRENT_ARCHITECTURE.md` và `../docs/ERD.md`.
 - **Xác thực email khách hàng:** đăng ký (`full_name, username, email, password`) tự gửi mail xác thực. Khách **chưa xác thực vẫn đăng nhập & xem được** (GET), nhưng bị chặn (403) mọi **thao tác nhạy cảm**: sửa hồ sơ, thiết lập PIN, cộng điểm, đặt bàn, nạp tiền (`payment/create`), xác nhận/tạo token thanh toán QR. Middleware `requireVerifiedEmail` kiểm tra trực tiếp DB.
 - **PIN ví bắt buộc:** mọi thao tác/xem liên quan **ví** đều yêu cầu khách **đã thiết lập mã PIN** (`requirePaymentPin`, kiểm tra `customers.payment_pin`): xem lịch sử giao dịch ví (`profile/transactions`), nạp tiền (`payment/create`), xem/tạo/xác nhận thanh toán QR (`qr-payment/*`). Chưa có PIN → 403 "Vui lòng thiết lập mã PIN thanh toán". Thiết lập PIN qua `POST /customer/profile/setup-pin` (cần đã xác thực email). Ngoài ra `GET /customer/profile/me` **ẩn số dư ví** (`wallet_balance = null`) khi chưa có PIN; frontend dựa vào cờ `has_payment_pin` để hiển thị nút "Thiết lập PIN".
 - Token nội bộ và khách hàng tách riêng qua cookie (`internalAccessToken` / `customerAccessToken`); ngoài ra hỗ trợ header `Authorization: Bearer <token>`.

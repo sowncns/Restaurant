@@ -24,6 +24,8 @@ import CashbackRatesPage from './pages/CashbackRatesPage'
 import HomeBannersPage from './pages/HomeBannersPage'
 import VouchersPage from './pages/VouchersPage'
 import SalesReportPage from './pages/SalesReportPage'
+import ReservationsPage from './pages/ReservationsPage'
+import NotFound from './pages/NotFound'
 import { ROLE_GROUPS } from './config/nav'
 import { useAuth } from './context/AuthContext'
 
@@ -57,6 +59,10 @@ export default function App() {
           <Route element={<ProtectedRoute roles={ROLE_GROUPS.RECEPTIONIST} />}>
             <Route path="floor" element={<FloorMapPage />} />
             <Route path="reservation-calls" element={<CallConfirmPage />} />
+          </Route>
+
+          <Route element={<ProtectedRoute roles={ROLE_GROUPS.RESERVATIONS} />}>
+            <Route path="reservations" element={<ReservationsPage />} />
           </Route>
 
           <Route element={<ProtectedRoute roles={ROLE_GROUPS.CASHIER} />}>
@@ -101,7 +107,7 @@ export default function App() {
             <Route path="home-banners" element={<HomeBannersPage />} />
           </Route>
 
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<NotFound />} />
         </Route>
       </Route>
     </Routes>

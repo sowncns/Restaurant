@@ -6,9 +6,31 @@ const pool = require("../../../config/db");
 
 const ACTIVE_STATUSES = "('PENDING', 'CONFIRMED', 'PREPARING', 'READY', 'SERVED')";
 
-exports.lockTable = (client, tableId) =>
+exports.lockTable = (client, tableId, companyId, branchId) =>
   client
-    .query("SELECT *, table_id AS id FROM dining_tables WHERE table_id = $1 FOR UPDATE", [tableId])
+    .query(
+      `SELECT *, table_id AS id FROM dining_tables
+       WHERE table_id = $1 AND company_id = $2 AND branch_id = $3 FOR UPDATE`,
+      [tableId, companyId, branchId]
+    )
+    .then((r) => r.rows[0]);
+
+exports.findTableScoped = (tableId, companyId, branchId) =>
+  pool
+    .query(
+      `SELECT table_id AS id, company_id, branch_id, status FROM dining_tables
+       WHERE table_id = $1 AND company_id = $2 AND branch_id = $3`,
+      [tableId, companyId, branchId]
+    )
+    .then((r) => r.rows[0]);
+
+exports.findUnpaidInvoiceByTable = (client, tableId) =>
+  client
+    .query(
+      `SELECT invoice_id AS id FROM invoices
+       WHERE table_id = $1 AND status = 'UNPAID' ORDER BY created_at DESC LIMIT 1`,
+      [tableId]
+    )
     .then((r) => r.rows[0]);
 
 // Chi cong mon con tinh tien: bo mon da huy (CANCELLED) va da void (VOIDED).
@@ -217,16 +239,17 @@ exports.markInvoicePaidById = (client, invoiceId) =>
 
 // ---- Hoa don moi nhat ----
 // Tim hoa don gan nhat cua ban: ca PAID (tien mat) lan UNPAID (ghi no).
-exports.findLatestPaidInvoice = (tableId) =>
+exports.findLatestPaidInvoice = (tableId, companyId, branchId) =>
   pool
     .query(
       `SELECT i.invoice_id AS id, i.invoice_code, i.amount, i.amount AS final_amount, i.status, i.created_at, i.paid_at,
               dt.table_number, dt.table_name, i.items AS items_snapshot
        FROM invoices i
        JOIN dining_tables dt ON i.table_id = dt.table_id
-       WHERE i.table_id = $1 AND i.status IN ('PAID', 'UNPAID')
+        WHERE i.table_id = $1 AND i.company_id = $2 AND i.branch_id = $3
+          AND i.status IN ('PAID', 'UNPAID')
        ORDER BY i.created_at DESC LIMIT 1`,
-      [tableId]
+       [tableId, companyId, branchId]
     )
     .then((r) => r.rows[0]);
 
@@ -291,6 +314,19 @@ exports.listInvoices = (currentUser, filters = {}) => {
   return pool.query(query, values).then(r => r.rows);
 };
 
-exports.markInvoicePaid = (invoiceId) => {
-  return pool.query("UPDATE invoices SET status = 'PAID', updated_at = NOW() WHERE invoice_id = $1 RETURNING *", [invoiceId]);
+exports.markInvoicePaid = (invoiceId, companyId, branchId) => {
+  return pool.query(
+    `UPDATE invoices SET status = 'PAID', paid_at = NOW(), updated_at = NOW()
+     WHERE invoice_id = $1 AND company_id = $2 AND branch_id = $3 AND status = 'UNPAID'
+     RETURNING *`,
+    [invoiceId, companyId, branchId]
+  );
 };
+
+exports.findInvoiceStatusScoped = (invoiceId, companyId, branchId) =>
+  pool
+    .query(
+      "SELECT status FROM invoices WHERE invoice_id = $1 AND company_id = $2 AND branch_id = $3",
+      [invoiceId, companyId, branchId]
+    )
+    .then((r) => r.rows[0]);

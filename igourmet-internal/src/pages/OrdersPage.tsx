@@ -61,6 +61,7 @@ export default function OrdersPage() {
         // Map Combos to fake items with negative ID
         const activeCombos = combos.filter((c: any) => c.status === 'ACTIVE').map((c: any) => ({
           menu_item_id: -c.id, // Trick: negative ID for combos
+          company_id: c.company_id,
           category_id: -1,
           kitchen_type_id: 0,
           name: c.name,

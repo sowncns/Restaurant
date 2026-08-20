@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="650" viewBox="0 0 1100 650">
+  <rect width="1100" height="650" fill="#ffffff"/>
+  <defs>
+    <style>
+      .box { fill: #fff; stroke: #202238; stroke-width: 2.2; }
+      .rule { stroke: #202238; stroke-width: 1.8; }
+      .title { font: 700 17px Georgia, serif; fill: #202238; text-anchor: middle; }
+      .field { font: 15px Georgia, serif; fill: #202238; }
+      .card { font: 700 14px Georgia, serif; fill: #202238; }
+      .caption { font: 23px "Times New Roman", serif; fill: #111; text-anchor: middle; }
+      .relation { fill: none; stroke: #111; stroke-width: 2.2; }
+    </style>
+  </defs>
+
+  <!-- Company -->
+  <rect class="box" x="35" y="205" width="235" height="190"/>
+  <line class="rule" x1="35" y1="255" x2="270" y2="255"/>
+  <line class="rule" x1="35" y1="365" x2="270" y2="365"/>
+  <text class="title" x="152" y="237">Company</text>
+  <text class="field" x="50" y="288">+int company_id PK</text>
+  <text class="field" x="50" y="319">+varchar name</text>
+  <text class="field" x="50" y="350">+varchar status</text>
+
+  <!-- Combo -->
+  <rect class="box" x="365" y="45" width="320" height="295"/>
+  <line class="rule" x1="365" y1="95" x2="685" y2="95"/>
+  <line class="rule" x1="365" y1="310" x2="685" y2="310"/>
+  <text class="title" x="525" y="77">Combo</text>
+  <text class="field" x="380" y="127">+int combo_id PK</text>
+  <text class="field" x="380" y="157">+int company_id FK</text>
+  <text class="field" x="380" y="187">+varchar combo_code</text>
+  <text class="field" x="380" y="217">+varchar name</text>
+  <text class="field" x="380" y="247">+decimal price</text>
+  <text class="field" x="380" y="277">+varchar image_url</text>
+  <text class="field" x="535" y="277">+varchar status</text>
+
+  <!-- MenuItem -->
+  <rect class="box" x="345" y="405" width="350" height="190"/>
+  <line class="rule" x1="345" y1="455" x2="695" y2="455"/>
+  <line class="rule" x1="345" y1="565" x2="695" y2="565"/>
+  <text class="title" x="520" y="437">MenuItem</text>
+  <text class="field" x="360" y="487">+int menu_item_id PK</text>
+  <text class="field" x="360" y="518">+int company_id FK</text>
+  <text class="field" x="360" y="549">+varchar name</text>
+
+  <!-- ComboItem -->
+  <rect class="box" x="805" y="205" width="270" height="220"/>
+  <line class="rule" x1="805" y1="255" x2="1075" y2="255"/>
+  <line class="rule" x1="805" y1="395" x2="1075" y2="395"/>
+  <text class="title" x="940" y="237">ComboItem</text>
+  <text class="field" x="820" y="288">+int combo_item_id PK</text>
+  <text class="field" x="820" y="319">+int combo_id PK_FK</text>
+  <text class="field" x="820" y="350">+int menu_item_id PK_FK</text>
+  <text class="field" x="820" y="381">+int quantity</text>
+
+  <!-- Company 1 to Combo many -->
+  <path class="relation" d="M270 255 C315 255 318 190 365 190"/>
+  <text class="card" x="278" y="247">1</text>
+  <text class="card" x="346" y="181">*</text>
+
+  <!-- Combo 1 to ComboItem many -->
+  <path class="relation" d="M685 190 C742 190 752 275 805 275"/>
+  <text class="card" x="692" y="181">1</text>
+  <text class="card" x="787" y="267">*</text>
+
+  <!-- MenuItem 1 to ComboItem many -->
+  <path class="relation" d="M695 500 C755 500 751 365 805 365"/>
+  <text class="card" x="702" y="493">1</text>
+  <text class="card" x="787" y="357">*</text>
+
+  <!-- Composition diamonds -->
+  <polygon points="270,255 281,247 292,255 281,263" fill="#111"/>
+  <polygon points="685,190 696,182 707,190 696,198" fill="#111"/>
+  <polygon points="695,500 706,492 717,500 706,508" fill="#111"/>
+
+  <text class="caption" x="550" y="632">Hình 3.20. Sơ đồ combo món ăn</text>
+</svg>

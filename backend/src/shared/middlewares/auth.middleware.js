@@ -13,19 +13,40 @@ function extractToken(req) {
   return bearer;
 }
 
-function requireAuth(req, res, next) {
-  const token = extractToken(req);
-  if (!token) return next(new Unauthorized("Thiếu token đăng nhập"));
+async function requireAuth(req, res, next) {
+  try {
+    const token = extractToken(req);
+    if (!token) return next(new Unauthorized("Thiếu token đăng nhập"));
 
-  req.user = verifyAccessToken(token);
+    req.user = verifyAccessToken(token);
 
-  const url = req.originalUrl;
-  if (url.startsWith("/api/internal") && req.user.type !== "staff")
-    return next(new Forbidden("Không có quyền truy cập Internal"));
-  if (url.startsWith("/api/customer") && req.user.type !== "customer")
-    return next(new Forbidden("Không có quyền truy cập Customer"));
+    const url = req.originalUrl;
+    if (url.startsWith("/api/internal") && req.user.type !== "staff")
+      return next(new Forbidden("Không có quyền truy cập Internal"));
+    if (url.startsWith("/api/customer") && req.user.type !== "customer")
+      return next(new Forbidden("Không có quyền truy cập Customer"));
 
-  next();
+    if (req.user.type === "staff") {
+      const result = await pool.query(
+        `SELECT e.employee_id AS id, e.username, e.full_name, e.company_id, e.branch_id,
+              e.status, r.code AS role, c.name AS company_name,
+              e.kitchen_type_id, kt.code AS kitchen_type_code
+         FROM employees e
+         JOIN roles r ON r.role_id = e.role_id
+         LEFT JOIN companies c ON c.company_id = e.company_id
+         LEFT JOIN kitchen_types kt ON kt.kitchen_type_id = e.kitchen_type_id
+         WHERE e.employee_id = $1`,
+        [req.user.id]
+      );
+      const staff = result.rows[0];
+      if (!staff || staff.status !== "ACTIVE") return next(new Unauthorized("Tài khoản không tồn tại hoặc đã bị khóa"));
+      req.user = { ...staff, type: "staff" };
+    }
+
+    next();
+  } catch (err) {
+    next(err);
+  }
 }
 
 // Load 1 lan trang thai tai khoan khach (email_verified + payment_pin) va cache tren req,

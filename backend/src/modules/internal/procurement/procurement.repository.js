@@ -53,9 +53,10 @@ exports.updateSupplier = (id, companyId, fields) => {
 };
 
 // ================= PURCHASE RECEIPTS =================
-exports.findReceipts = (companyId, { status, supplierId, limit = 100 } = {}) => {
+exports.findReceipts = (companyId, branchId, { status, supplierId, limit = 100 } = {}) => {
   const values = [companyId];
   let where = "WHERE pr.company_id = $1";
+  if (branchId != null) { values.push(branchId); where += ` AND pr.branch_id = $${values.length}`; }
   if (status) { values.push(status); where += ` AND pr.status = $${values.length}`; }
   if (supplierId) { values.push(supplierId); where += ` AND pr.supplier_id = $${values.length}`; }
   values.push(limit);
@@ -74,7 +75,10 @@ exports.findReceipts = (companyId, { status, supplierId, limit = 100 } = {}) => 
     .then((r) => r.rows);
 };
 
-exports.findReceiptById = (id, companyId) =>
+exports.findReceiptById = (id, companyId, branchId) => {
+  const values = [id, companyId];
+  const branchWhere = branchId == null ? "" : ` AND pr.branch_id = $${values.push(branchId)}`;
+  return (
   pool
     .query(
       `SELECT pr.*, pr.purchase_receipt_id AS id, s.supplier_name, s.supplier_code, s.email AS supplier_email,
@@ -83,9 +87,16 @@ exports.findReceiptById = (id, companyId) =>
        JOIN suppliers s ON s.supplier_id = pr.supplier_id
        LEFT JOIN branches b ON b.branch_id = pr.branch_id
        LEFT JOIN employees e ON e.employee_id = pr.created_by
-       WHERE pr.purchase_receipt_id = $1 AND pr.company_id = $2`,
-      [id, companyId]
-    )
+        WHERE pr.purchase_receipt_id = $1 AND pr.company_id = $2${branchWhere}`,
+       values
+     )
+    .then((r) => r.rows[0])
+  );
+};
+
+exports.findBranchById = (branchId) =>
+  pool
+    .query("SELECT branch_id AS id, company_id FROM branches WHERE branch_id = $1", [branchId])
     .then((r) => r.rows[0]);
 
 exports.findReceiptItems = (receiptId) =>
@@ -139,14 +150,15 @@ exports.createReceipt = async (companyId, header, items) => {
 
 // Xac nhan phieu: cong ton kho tung nguyen lieu trong branch_inventory + sinh inventory_transactions (PURCHASE),
 // cap nhat cost_price theo don gia moi (neu > 0), chuyen phieu -> CONFIRMED. Nguyen tu.
-exports.confirmReceipt = async (receiptId, companyId, staffId) => {
+exports.confirmReceipt = async (receiptId, companyId, branchScopeId, staffId) => {
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
     const receipt = (
       await client.query(
-        "SELECT purchase_receipt_id AS id, status, branch_id FROM purchase_receipts WHERE purchase_receipt_id = $1 AND company_id = $2 FOR UPDATE",
-        [receiptId, companyId]
+        `SELECT purchase_receipt_id AS id, status, branch_id FROM purchase_receipts
+         WHERE purchase_receipt_id = $1 AND company_id = $2 AND ($3::bigint IS NULL OR branch_id = $3) FOR UPDATE`,
+        [receiptId, companyId, branchScopeId]
       )
     ).rows[0];
     if (!receipt) { await client.query("ROLLBACK"); return { error: "NOT_FOUND" }; }
@@ -232,7 +244,10 @@ exports.confirmReceipt = async (receiptId, companyId, staffId) => {
   }
 };
 
-exports.findReceiptByCode = (code, companyId) =>
+exports.findReceiptByCode = (code, companyId, branchId) => {
+  const values = [code, companyId];
+  const branchWhere = branchId == null ? "" : ` AND pr.branch_id = $${values.push(branchId)}`;
+  return (
   pool
     .query(
       `SELECT pr.*, pr.purchase_receipt_id AS id, s.supplier_name, s.supplier_code, s.email AS supplier_email,
@@ -241,20 +256,23 @@ exports.findReceiptByCode = (code, companyId) =>
        JOIN suppliers s ON s.supplier_id = pr.supplier_id
        LEFT JOIN branches b ON b.branch_id = pr.branch_id
        LEFT JOIN employees e ON e.employee_id = pr.created_by
-       WHERE pr.receipt_code = $1 AND pr.company_id = $2`,
-      [code, companyId]
-    )
-    .then((r) => r.rows[0]);
+        WHERE pr.receipt_code = $1 AND pr.company_id = $2${branchWhere}`,
+       values
+     )
+    .then((r) => r.rows[0])
+  );
+};
 
 // Import receipt: confirm + auto-create missing ingredients, dung branch_inventory de luu ton kho
-exports.importReceipt = async (receiptId, companyId, branchId, staffId) => {
+exports.importReceipt = async (receiptId, companyId, branchScopeId, branchId, staffId) => {
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
     const receipt = (
       await client.query(
-        "SELECT purchase_receipt_id AS id, status, branch_id FROM purchase_receipts WHERE purchase_receipt_id = $1 AND company_id = $2 FOR UPDATE",
-        [receiptId, companyId]
+        `SELECT purchase_receipt_id AS id, status, branch_id FROM purchase_receipts
+         WHERE purchase_receipt_id = $1 AND company_id = $2 AND ($3::bigint IS NULL OR branch_id = $3) FOR UPDATE`,
+        [receiptId, companyId, branchScopeId]
       )
     ).rows[0];
     if (!receipt) { await client.query("ROLLBACK"); return { error: "NOT_FOUND" }; }
@@ -352,12 +370,12 @@ exports.importReceipt = async (receiptId, companyId, branchId, staffId) => {
   }
 };
 
-exports.cancelReceipt = (id, companyId) =>
+exports.cancelReceipt = (id, companyId, branchId) =>
   pool
     .query(
       `UPDATE purchase_receipts SET status = 'CANCELLED', updated_at = NOW()
-       WHERE purchase_receipt_id = $1 AND company_id = $2 AND status = 'DRAFT'
+        WHERE purchase_receipt_id = $1 AND company_id = $2 AND ($3::bigint IS NULL OR branch_id = $3) AND status = 'DRAFT'
        RETURNING purchase_receipt_id AS id`,
-      [id, companyId]
+      [id, companyId, branchId]
     )
     .then((r) => r.rows[0]);

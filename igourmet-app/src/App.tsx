@@ -13,6 +13,8 @@ import VerifyEmail from './pages/VerifyEmail';
 import ResetPassword from './pages/ResetPassword';
 import Invoices from './pages/Invoices';
 import MyQr from './pages/MyQr';
+import ProtectedRoute from './components/ProtectedRoute';
+import NotFound from './pages/NotFound';
 
 function App() {
   return (
@@ -26,12 +28,15 @@ function App() {
           <Route path="reset-password" element={<ResetPassword />} />
           <Route path="brands" element={<Brands />} />
           <Route path="booking" element={<Booking />} />
-          <Route path="booking/history" element={<ReservationHistory />} />
           <Route path="delivery/:companyId/:branchId" element={<DeliveryMenu />} />
           <Route path="igo-card" element={<IGoCard />} />
-          <Route path="topup" element={<Topup />} />
-          <Route path="invoices" element={<Invoices />} />
-          <Route path="my-qr" element={<MyQr />} />
+          <Route element={<ProtectedRoute />}>
+            <Route path="booking/history" element={<ReservationHistory />} />
+            <Route path="topup" element={<Topup />} />
+            <Route path="invoices" element={<Invoices />} />
+            <Route path="my-qr" element={<MyQr />} />
+          </Route>
+          <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>
     </BrowserRouter>

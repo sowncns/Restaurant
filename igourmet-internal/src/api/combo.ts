@@ -22,12 +22,14 @@ export interface Combo {
 }
 
 export const comboApi = {
-  async list(): Promise<Combo[]> {
-    const { data } = await api.get('/internal/combos')
+  async list(companyId?: number | ''): Promise<Combo[]> {
+    const params = companyId ? { company_id: companyId } : undefined
+    const { data } = await api.get('/internal/combos', { params })
     return data.combos
   },
-  async get(id: number): Promise<Combo> {
-    const { data } = await api.get(`/internal/combos/${id}`)
+  async get(id: number, companyId?: number | ''): Promise<Combo> {
+    const params = companyId ? { company_id: companyId } : undefined
+    const { data } = await api.get(`/internal/combos/${id}`, { params })
     return data.combo
   },
   async create(body: any): Promise<Combo> {
@@ -38,7 +40,8 @@ export const comboApi = {
     const { data } = await api.put(`/internal/combos/${id}`, body)
     return data.combo
   },
-  async remove(id: number): Promise<void> {
-    await api.delete(`/internal/combos/${id}`)
+  async remove(id: number, companyId?: number | ''): Promise<void> {
+    const params = companyId ? { company_id: companyId } : undefined
+    await api.delete(`/internal/combos/${id}`, { params })
   }
 }

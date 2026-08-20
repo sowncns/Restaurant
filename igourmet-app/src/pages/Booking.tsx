@@ -48,7 +48,7 @@ const Booking = () => {
   const [showMenuModal, setShowMenuModal] = useState(false);
   const [menuItems, setMenuItems] = useState<any[]>([]);
   const [loadingMenu, setLoadingMenu] = useState(false);
-  const [preorderCart, setPreorderCart] = useState<{ [id: string]: { item: any; quantity: number } }>({});
+  const [preorderCart, setPreorderCart] = useState<{ [id: string]: { item: any; quantity: number } }>(location.state?.preorderCart || {});
   const [categories, setCategories] = useState<string[]>([]);
   const [activeCategory, setActiveCategory] = useState('Tất cả');
   const [searchQuery, setSearchQuery] = useState('');

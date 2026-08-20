@@ -3,8 +3,6 @@
 const env = require("../../config/env");
 const logger = require("./logger");
 
-const RESEND_URL = "https://api.resend.com/emails";
-
 async function sendMail(to, subject, html) {
   if (!env.RESEND_API_KEY) {
     logger.warn("RESEND_API_KEY chưa cấu hình — bỏ qua gửi mail");
@@ -12,7 +10,7 @@ async function sendMail(to, subject, html) {
   }
   const from = env.MAIL_FROM || env.MAIL_USER; // vd: "Restaurant <no-reply@yourdomain.com>" — domain phai verify tren Resend
 
-  const res = await fetch(RESEND_URL, {
+  const res = await fetch(env.RESEND_API_URL, {
     method: "POST",
     headers: {
       authorization: `Bearer ${env.RESEND_API_KEY}`,

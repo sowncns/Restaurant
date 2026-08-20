@@ -43,11 +43,12 @@ function ctx(req) {
 }
 
 // Truy van log (cho API doc noi bo). Loc theo pham vi cong ty.
-async function query(companyId, { action, entityType, actorId, from, to, limit = 100, offset = 0 } = {}) {
+async function query(companyId, { branchId, action, entityType, actorId, from, to, limit = 100, offset = 0 } = {}) {
   const values = [];
   const conds = [];
   // SUPER_ADMIN (companyId = null/undefined) xem toan bo; con lai loc theo cong ty.
   if (companyId != null) { values.push(companyId); conds.push(`company_id = $${values.length}`); }
+  if (branchId != null) { values.push(branchId); conds.push(`branch_id = $${values.length}`); }
   if (action) { values.push(action); conds.push(`action = $${values.length}`); }
   if (entityType) { values.push(entityType); conds.push(`entity_type = $${values.length}`); }
   if (actorId) { values.push(actorId); conds.push(`actor_id = $${values.length}`); }

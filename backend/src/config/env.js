@@ -30,6 +30,7 @@ const env = cleanEnv(process.env, {
   MAIL_PASS: str({ default: "" }),
   // Render chan SMTP -> gui mail qua Resend HTTP API. MAIL_FROM = "Name <email@domain>" (domain da verify tren Resend).
   RESEND_API_KEY: str({ default: "" }),
+  RESEND_API_URL: str({ default: "https://api.resend.com/emails" }),
   MAIL_FROM: str({ default: "" }),
 
   // Supabase (Realtime + Auth hybrid). SERVICE_ROLE_KEY chi dung o backend, khong ra frontend.

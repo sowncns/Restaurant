@@ -15,7 +15,7 @@ const adjustPointsSchema = z.object({
 });
 
 const router = express.Router();
-router.use(requireAuth, authorize("COMPANY_ADMIN", "SUPER_ADMIN"));
+router.use(requireAuth, authorize("SUPER_ADMIN"));
 
 router.post("/:id/points", validate(adjustPointsSchema), controller.adjustPoints);
 

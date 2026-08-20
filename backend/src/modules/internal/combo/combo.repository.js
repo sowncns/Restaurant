@@ -121,9 +121,10 @@ exports.updateCombo = async (id, companyId, data) => {
       values.push(new Date()); // updated_at
       cols.push(`updated_at = $${values.length}`);
       
+      let comboRes;
       if (companyId != null) {
         values.push(id, companyId);
-        var comboRes = await client.query(
+        comboRes = await client.query(
           `UPDATE combos SET ${cols.join(", ")}
            WHERE combo_id = $${values.length - 1} AND company_id = $${values.length}
            RETURNING combo_id AS id, *`,
@@ -131,7 +132,7 @@ exports.updateCombo = async (id, companyId, data) => {
         );
       } else {
         values.push(id);
-        var comboRes = await client.query(
+        comboRes = await client.query(
           `UPDATE combos SET ${cols.join(", ")}
            WHERE combo_id = $${values.length}
            RETURNING combo_id AS id, *`,

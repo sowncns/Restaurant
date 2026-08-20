@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import api from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
@@ -13,13 +13,15 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [isForgotModalOpen, setIsForgotModalOpen] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+  const destination = location.state?.from || '/';
   const { login, user, loading: authLoading } = useAuth();
 
   useEffect(() => {
     if (!authLoading && user) {
-      navigate('/');
+      navigate(destination.pathname || destination, { replace: true, state: destination.state });
     }
-  }, [user, authLoading, navigate]);
+  }, [user, authLoading, navigate, destination]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,8 +40,7 @@ const Login = () => {
 
       login(user);
       
-      // Điều hướng về trang chủ
-      navigate('/');
+      navigate(destination.pathname || destination, { replace: true, state: destination.state });
     } catch (err: any) {
       setError(err.response?.data?.message || 'Đăng nhập thất bại. Vui lòng kiểm tra lại!');
     } finally {

@@ -28,6 +28,9 @@ exports.list = (scopeWhere, values, extra = "") =>
 exports.findById = (id) =>
   pool.query(`${BASE_SELECT} WHERE r.reservation_id = $1`, [id]).then((r) => r.rows[0]);
 
+exports.findByIdForUpdate = (db, id) =>
+  db.query(`${BASE_SELECT} WHERE r.reservation_id = $1 FOR UPDATE OF r`, [id]).then((r) => r.rows[0]);
+
 exports.findBranch = (branchId) =>
   pool
     .query("SELECT branch_id AS id, company_id, name FROM branches WHERE branch_id = $1", [branchId])
@@ -66,8 +69,11 @@ exports.suggestFreeTable = (branchId, guestCount, date, time) =>
     .then((r) => r.rows[0]);
 
 // Kiem tra ban da co phieu dat khac trung khung gio (+-90') cung ngay chua.
-exports.hasReservationConflict = (tableId, date, time, excludeId = 0) =>
-  pool
+exports.lockTableSlot = (db, tableId, date) =>
+  db.query("SELECT pg_advisory_xact_lock(hashtextextended($1, 0))", [`reservation:${tableId}:${date}`]);
+
+exports.hasReservationConflict = (tableId, date, time, excludeId = 0, db = pool) =>
+  db
     .query(
       `SELECT 1 FROM reservations
        WHERE table_id = $1 AND reservation_date = $2
@@ -87,10 +93,21 @@ exports.assign = (id, tableId) =>
     )
     .then((r) => r.rows[0]);
 
+exports.assignTx = (db, id, tableId) =>
+  db.query(
+    "UPDATE reservations SET table_id = $2, status = 'CONFIRMED', updated_at = NOW() WHERE reservation_id = $1 RETURNING reservation_id AS id",
+    [id, tableId]
+  ).then((r) => r.rows[0]);
+
 // ----- Trong transaction (check-in) -----
 exports.lockForCheckin = (db, id) =>
   db
     .query("SELECT reservation_id AS id, company_id, branch_id, table_id, status FROM reservations WHERE reservation_id = $1 FOR UPDATE", [id])
+    .then((r) => r.rows[0]);
+
+exports.lockTableForCheckin = (db, tableId) =>
+  db
+    .query("SELECT table_id AS id, branch_id, status, capacity FROM dining_tables WHERE table_id = $1 FOR UPDATE", [tableId])
     .then((r) => r.rows[0]);
 
 exports.checkinTx = (db, id, tableId, staffId) =>
@@ -183,6 +200,24 @@ exports.create = (data) =>
     )
     .then((r) => r.rows[0].id);
 
+exports.createTx = (db, data) =>
+  db
+    .query(
+      `INSERT INTO reservations
+         (reservation_code, company_id, branch_id, table_id, customer_id,
+          customer_name, customer_phone, customer_email,
+          guest_count, reservation_date, reservation_time, status, note, special_request, created_by)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,COALESCE($12,'CONFIRMED'),$13,$14,$15)
+       RETURNING reservation_id AS id`,
+      [
+        data.reservation_code, data.company_id, data.branch_id, data.table_id ?? null, data.customer_id ?? null,
+        data.customer_name, data.customer_phone, data.customer_email ?? null,
+        data.guest_count ?? 1, data.reservation_date, data.reservation_time, data.status ?? null,
+        data.note ?? null, data.special_request ?? null, data.created_by ?? null,
+      ]
+    )
+    .then((r) => r.rows[0].id);
+
 exports.remove = (id) =>
   pool.query("DELETE FROM reservations WHERE reservation_id = $1", [id]);
 
@@ -196,6 +231,24 @@ exports.update = (id, fields) => {
   if (cols.length === 0) return exports.findById(id);
   values.push(id);
   return pool
+    .query(
+      `UPDATE reservations SET ${cols.join(", ")}, updated_at = NOW()
+       WHERE reservation_id = $${values.length} RETURNING reservation_id AS id`,
+      values
+    )
+    .then((r) => r.rows[0]);
+};
+
+exports.updateTx = (db, id, fields) => {
+  const cols = [];
+  const values = [];
+  for (const [key, val] of Object.entries(fields)) {
+    values.push(val);
+    cols.push(`${key} = $${values.length}`);
+  }
+  if (cols.length === 0) return Promise.resolve({ id });
+  values.push(id);
+  return db
     .query(
       `UPDATE reservations SET ${cols.join(", ")}, updated_at = NOW()
        WHERE reservation_id = $${values.length} RETURNING reservation_id AS id`,
