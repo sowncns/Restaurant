@@ -4,7 +4,7 @@ const controller = require("./checkout.controller");
 const { requireAuth } = require("../../../shared/middlewares/auth.middleware");
 const { authorize } = require("../../../shared/middlewares/role.middleware");
 const { validate } = require("../../../shared/middlewares/validate.middleware");
-const { createInvoiceSchema, validateVoucherSchema, scanSchema, voidItemSchema, discountItemSchema, reduceQuantitySchema } = require("./checkout.schema");
+const { createInvoiceSchema, validateVoucherSchema, scanSchema, voidItemSchema, discountItemSchema, reduceQuantitySchema, vatInfoSchema } = require("./checkout.schema");
 
 const router = express.Router();
 
@@ -43,7 +43,7 @@ router.get("/table/:tableId/kiem-mon", staffUp, controller.getKiemMon);
 router.get("/table/:tableId/latest-invoice", staffUp, controller.getLatestInvoice);
 
 // VAT
-router.post("/table/:tableId/vat", staffUp, controller.saveTableVat);
+router.post("/table/:tableId/vat", staffUp, validate(vatInfoSchema), controller.saveTableVat);
 router.get("/table/:tableId/vat", staffUp, controller.getTableVat);
 
 

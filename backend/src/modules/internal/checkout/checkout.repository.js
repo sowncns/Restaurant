@@ -9,8 +9,11 @@ const ACTIVE_STATUSES = "('PENDING', 'CONFIRMED', 'PREPARING', 'READY', 'SERVED'
 exports.lockTable = (client, tableId, companyId, branchId) =>
   client
     .query(
-      `SELECT *, table_id AS id FROM dining_tables
-       WHERE table_id = $1 AND company_id = $2 AND branch_id = $3 FOR UPDATE`,
+      `SELECT dt.*, dt.table_id AS id, b.company_id
+       FROM dining_tables dt
+       JOIN branches b ON b.branch_id = dt.branch_id
+       WHERE dt.table_id = $1 AND b.company_id = $2 AND dt.branch_id = $3
+       FOR UPDATE OF dt`,
       [tableId, companyId, branchId]
     )
     .then((r) => r.rows[0]);
@@ -18,8 +21,10 @@ exports.lockTable = (client, tableId, companyId, branchId) =>
 exports.findTableScoped = (tableId, companyId, branchId) =>
   pool
     .query(
-      `SELECT table_id AS id, company_id, branch_id, status FROM dining_tables
-       WHERE table_id = $1 AND company_id = $2 AND branch_id = $3`,
+      `SELECT dt.table_id AS id, b.company_id, dt.branch_id, dt.status
+       FROM dining_tables dt
+       JOIN branches b ON b.branch_id = dt.branch_id
+       WHERE dt.table_id = $1 AND b.company_id = $2 AND dt.branch_id = $3`,
       [tableId, companyId, branchId]
     )
     .then((r) => r.rows[0]);

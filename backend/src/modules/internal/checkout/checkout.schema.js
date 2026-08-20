@@ -36,4 +36,11 @@ const reduceQuantitySchema = z.object({
   note: z.string().max(500).optional(),
 });
 
-module.exports = { createInvoiceSchema, validateVoucherSchema, scanSchema, voidItemSchema, discountItemSchema, reduceQuantitySchema };
+const vatInfoSchema = z.object({
+  companyName: z.string().trim().max(200).default(""),
+  taxCode: z.string().trim().max(50).default(""),
+  address: z.string().trim().max(500).default(""),
+  email: z.union([z.literal(""), z.string().trim().email("Email nhận hóa đơn không hợp lệ")]),
+});
+
+module.exports = { createInvoiceSchema, validateVoucherSchema, scanSchema, voidItemSchema, discountItemSchema, reduceQuantitySchema, vatInfoSchema };

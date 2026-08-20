@@ -3,9 +3,7 @@
   "public": 23,
   "protected": 160,
   "safe_reads": 75,
-  "live_probe_exclusions": [
-    "GET /customer/auth/test-mail"
-  ],
+  "live_probe_exclusions": [],
   "routes": [
     {
       "id": "POST /webhook",
