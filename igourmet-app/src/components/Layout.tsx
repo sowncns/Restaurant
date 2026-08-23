@@ -60,6 +60,7 @@ const Layout = () => {
           {user ? (
             <div className="flex items-center gap-3">
               <div 
+                data-testid="customer-profile-button"
                 onClick={() => setIsProfileOpen(true)}
                 className="hidden md:flex items-center gap-2 bg-orange-50 hover:bg-orange-100 p-1.5 pr-4 rounded-full border border-orange-100 cursor-pointer transition-colors"
               >
@@ -81,7 +82,8 @@ const Layout = () => {
           )}
 
           {user ? (
-            <button 
+            <button
+              data-testid="customer-profile-button"
               onClick={() => setIsProfileOpen(true)}
               className="md:hidden p-1.5 rounded-full bg-primary/10"
             >

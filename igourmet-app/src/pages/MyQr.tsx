@@ -51,12 +51,15 @@ const MyQr = () => {
             {generating ? (
               <RefreshCw className="w-10 h-10 text-primary animate-spin" />
             ) : user?.id ? (
-              <QRCodeSVG 
-                value={memberToken || ''} 
-                size={200} 
-                level="H" 
-                fgColor="#00a662" 
-              />
+              <>
+                <div data-testid="customer-member-token" data-token={memberToken || ''} className="hidden">{memberToken}</div>
+                <QRCodeSVG 
+                  value={memberToken || ''} 
+                  size={200} 
+                  level="H" 
+                  fgColor="#00a662" 
+                />
+              </>
             ) : (
               <div className="w-[200px] h-[200px] bg-white flex items-center justify-center text-sm text-gray-400 rounded-2xl shadow-inner">
                 Vui lòng đăng nhập

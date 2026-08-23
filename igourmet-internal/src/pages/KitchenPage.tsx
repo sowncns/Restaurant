@@ -517,7 +517,7 @@ function KitchenCard({
   }
 
   return (
-    <div className={`rounded-lg border p-3 transition-colors ${colorClass}`}>
+    <div data-testid="kitchen-order-item" className={`rounded-lg border p-3 transition-colors ${colorClass}`}>
       <div className="flex items-start justify-between gap-2">
         <div>
           <div className="flex items-center gap-2">
@@ -538,7 +538,7 @@ function KitchenCard({
             <Printer size={14} className="mr-1" /> In
           </Button>
           {onReady && (
-            <Button onClick={onReady} disabled={loading} className="h-8 px-3 text-xs">
+            <Button data-testid="kitchen-ready-button" onClick={onReady} disabled={loading} className="h-8 px-3 text-xs">
               <Check size={14} className="mr-1" /> Xong
             </Button>
           )}

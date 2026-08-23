@@ -404,6 +404,14 @@ async function getLatestInvoice(user, tableId) {
   return { ...invoiceData, items };
 }
 
+// Lay 1 hoa don cu the theo id (vd de in lai tu trang Cong no) - scope theo company/branch.
+async function getInvoiceById(user, invoiceId) {
+  const invoice = await repo.findInvoiceByIdScoped(invoiceId, user.company_id, user.branch_id);
+  if (!invoice) throw new NotFound("Không tìm thấy hóa đơn");
+  const items = await repo.findInvoiceItems(invoiceId);
+  return { ...invoice, items };
+}
+
 const CLOSED_ORDER = new Set(["COMPLETED", "CANCELLED"]);
 
 async function discountItem(user, orderItemId, { discount_percent, note }) {
@@ -532,6 +540,7 @@ module.exports = {
   getTableVat,
   getKiemMon,
   getLatestInvoice,
+  getInvoiceById,
   voidItem,
   discountItem,
   reduceQuantity,

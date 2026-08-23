@@ -2,6 +2,25 @@
 
 This directory is independent from backend, frontend, and browser E2E tests. The executable catalog in `route_catalog.py` mirrors all 183 Express routes currently mounted below `/api` (23 public, 21 customer-protected, and 139 internal-protected).
 
+## Structure
+
+```text
+api-tests/
+  conftest.py                 # Shared pytest config, API session, login fixtures
+  route_catalog.py            # Executable catalog of backend /api routes
+  run-local.ps1               # Starts local backend + fake mail + pytest
+  support/fake-resend.js      # Local fake Resend server for email assertions
+  tests/
+    test_authenticated_smoke.py
+    test_branch_authorization.py
+    test_main_business_workflows.py
+    test_negative_mutations.py
+    test_public_contracts.py
+    test_route_catalog.py
+    test_vat_endpoint.py
+  reports/                    # Generated pytest HTML/JUnit reports
+```
+
 ## Setup
 
 ```powershell
@@ -42,7 +61,7 @@ Unavailable API services and missing role credentials/fixture IDs produce explic
 
 ## Destructive flows
 
-Destructive tests create and clean up a customer reservation and an empty waiter order. Run them only against a disposable environment:
+Destructive tests execute the acceptance workflows and cross-branch mutation-denial checks. Run them only against a disposable environment:
 
 ```powershell
 $env:API_DESTRUCTIVE = "1"

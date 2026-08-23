@@ -133,6 +133,9 @@ export default function TableGridView({
 
               return (
                 <button
+                  data-testid="waiter-table-card"
+                  data-table-id={t.id}
+                  data-table-number={t.table_number}
                   key={t.id}
                   disabled={disabled}
                   onClick={() => onSelect(t)}

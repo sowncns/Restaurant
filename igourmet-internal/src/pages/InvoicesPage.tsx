@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
 import { PageHeader, Badge, Button } from '../components/ui'
 import { api } from '../lib/api'
+import { checkoutApi } from '../api/checkout'
 import { errMsg } from '../lib/errMsg'
-import { Check, Clock, Search } from 'lucide-react'
+import { printPaymentInvoice } from '../lib/printInvoice'
+import { Check, Clock, Printer, Search } from 'lucide-react'
 
 interface Invoice {
   id: number
@@ -51,6 +53,15 @@ export default function InvoicesPage() {
     }
   }
 
+  async function reprint(id: number) {
+    try {
+      const invoice = await checkoutApi.getInvoice(id)
+      printPaymentInvoice(invoice)
+    } catch (e) {
+      alert(errMsg(e))
+    }
+  }
+
   return (
     <div>
       <PageHeader 
@@ -69,7 +80,8 @@ export default function InvoicesPage() {
             >
               Chưa TT (Ghi nợ)
             </button>
-            <button 
+            <button
+              data-testid="invoices-filter-paid"
               className={`px-3 py-1.5 text-sm font-medium rounded-md ${filter === 'PAID' ? 'bg-white shadow text-emerald-600' : 'text-slate-600'}`}
               onClick={() => setFilter('PAID')}
             >
@@ -136,11 +148,22 @@ export default function InvoicesPage() {
                       )}
                     </td>
                     <td className="px-4 py-3 text-right">
-                      {(inv.status === 'UNPAID' || inv.status === 'DEBT') && (
-                        <Button onClick={() => markPaid(inv.id)} className="px-3 py-1.5 text-xs bg-emerald-600 hover:bg-emerald-700">
-                          <Check size={14} className="mr-1" /> Thu tiền
-                        </Button>
-                      )}
+                      <div className="flex justify-end gap-2">
+                        {inv.status === 'PAID' && (
+                          <Button
+                            data-testid="invoice-reprint-button"
+                            onClick={() => reprint(inv.id)}
+                            className="px-3 py-1.5 text-xs bg-slate-600 hover:bg-slate-700"
+                          >
+                            <Printer size={14} className="mr-1" /> In lại
+                          </Button>
+                        )}
+                        {(inv.status === 'UNPAID' || inv.status === 'DEBT') && (
+                          <Button onClick={() => markPaid(inv.id)} className="px-3 py-1.5 text-xs bg-emerald-600 hover:bg-emerald-700">
+                            <Check size={14} className="mr-1" /> Thu tiền
+                          </Button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}

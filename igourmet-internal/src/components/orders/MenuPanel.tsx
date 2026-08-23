@@ -86,6 +86,8 @@ export default function MenuPanel({
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5">
         {shown.map((it) => (
           <button
+            data-testid="waiter-menu-item"
+            data-menu-item-id={it.menu_item_id}
             key={it.menu_item_id}
             onClick={() => onAdd(it)}
             className="group flex flex-col justify-between overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-left transition-all duration-150 active:scale-[0.97] hover:border-emerald-500 hover:shadow-xs select-none cursor-pointer"

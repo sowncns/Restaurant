@@ -260,6 +260,8 @@ const PinVerification: React.FC<PinVerificationProps> = ({ onSuccess, onSubmitPi
             {keypad.map((num, idx) => (
               <button
                 key={idx}
+                data-testid="pin-keypad-key"
+                data-key={num}
                 disabled={loading}
                 onClick={() => num === 'del' ? handleDelete() : (num !== '' ? handleNumberClick(num.toString()) : null)}
                 className={`h-14 rounded-full text-2xl font-medium transition-colors ${

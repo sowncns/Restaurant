@@ -302,6 +302,7 @@ const ProfileDrawer = ({ isOpen, onClose, openVoucherModal }: ProfileDrawerProps
                   <ChevronRight className="w-4 h-4 text-gray-300" />
                 </div>
                 <div 
+                  data-testid="customer-logout-button"
                   onClick={handleLogout}
                   className={`flex items-center gap-4 py-3 px-2 mt-2 group ${loggingOut ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
                 >

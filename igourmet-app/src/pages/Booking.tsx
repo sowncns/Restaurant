@@ -274,7 +274,7 @@ const Booking = () => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <h2 className="text-3xl font-bold text-gray-800">Đặt bàn thành công!</h2>
+          <h2 data-testid="booking-success-message" className="text-3xl font-bold text-gray-800">Đặt bàn thành công!</h2>
           <p className="text-gray-600">
             Yêu cầu đặt bàn của bạn đã được gửi. Chúng tôi sẽ sớm liên hệ để xác nhận.
           </p>
@@ -309,7 +309,8 @@ const Booking = () => {
               <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
                 <Building2 className="w-4 h-4 text-primary" /> Thương hiệu (Nhà hàng) *
               </label>
-              <select 
+              <select
+                data-testid="booking-company-select"
                 value={selectedCompany}
                 onChange={(e) => setSelectedCompany(e.target.value)}
                 className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-primary focus:ring-1 focus:ring-primary appearance-none text-gray-700"
@@ -327,7 +328,8 @@ const Booking = () => {
               <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
                 <MapPin className="w-4 h-4 text-primary" /> Chi nhánh *
               </label>
-              <select 
+              <select
+                data-testid="booking-branch-select"
                 value={selectedBranch}
                 onChange={(e) => setSelectedBranch(e.target.value)}
                 className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-primary focus:ring-1 focus:ring-primary appearance-none text-gray-700"
@@ -351,8 +353,9 @@ const Booking = () => {
               <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
                 <User className="w-4 h-4 text-primary" /> Tên khách hàng *
               </label>
-              <input 
-                type="text" 
+              <input
+                data-testid="booking-name-input"
+                type="text"
                 value={customerName}
                 onChange={(e) => setCustomerName(e.target.value)}
                 placeholder="Nhập họ và tên"
@@ -365,8 +368,9 @@ const Booking = () => {
               <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
                 <Phone className="w-4 h-4 text-primary" /> Số điện thoại *
               </label>
-              <input 
-                type="tel" 
+              <input
+                data-testid="booking-phone-input"
+                type="tel"
                 value={customerPhone}
                 onChange={(e) => setCustomerPhone(e.target.value)}
                 placeholder="Nhập số điện thoại"
@@ -410,8 +414,9 @@ const Booking = () => {
                 <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
                   <Calendar className="w-4 h-4 text-primary" /> Ngày đặt *
                 </label>
-                <input 
-                  type="date" 
+                <input
+                  data-testid="booking-date-input"
+                  type="date"
                   value={reservationDate}
                   onChange={(e) => setReservationDate(e.target.value)}
                   className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-primary focus:ring-1 focus:ring-primary text-gray-700"
@@ -421,8 +426,9 @@ const Booking = () => {
                 <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
                   <Clock className="w-4 h-4 text-primary" /> Giờ đến *
                 </label>
-                <input 
-                  type="time" 
+                <input
+                  data-testid="booking-time-input"
+                  type="time"
                   value={reservationTime}
                   onChange={(e) => setReservationTime(e.target.value)}
                   className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-primary focus:ring-1 focus:ring-primary text-gray-700"
@@ -448,7 +454,8 @@ const Booking = () => {
 
           <div className="space-y-2 pt-2">
             <label className="text-sm font-medium text-gray-700">Ghi chú thêm (Không bắt buộc)</label>
-            <textarea 
+            <textarea
+              data-testid="booking-note-input"
               rows={3}
               value={specialRequest}
               onChange={(e) => setSpecialRequest(e.target.value)}
@@ -484,8 +491,9 @@ const Booking = () => {
             </div>
           )}
 
-          <button 
-            type="submit" 
+          <button
+            data-testid="booking-submit-button"
+            type="submit"
             disabled={isSubmitting}
             className={`w-full bg-primary text-white text-lg font-bold py-4 rounded-xl transition-colors shadow-lg mt-4 ${isSubmitting ? 'opacity-70 cursor-not-allowed' : 'hover:bg-amber-700 hover:shadow-xl'}`}
           >

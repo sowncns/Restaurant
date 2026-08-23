@@ -106,6 +106,10 @@ export const checkoutApi = {
     const { data } = await api.get(`/internal/checkout/table/${tableId}/latest-invoice`)
     return data
   },
+  async getInvoice(invoiceId: number): Promise<any> {
+    const { data } = await api.get(`/internal/checkout/invoices/${invoiceId}`)
+    return data
+  },
   // Thu ngan void 1 mon (nham lan) khoi bill.
   async voidItem(
     orderItemId: number,

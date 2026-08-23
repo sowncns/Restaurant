@@ -145,6 +145,9 @@ export default function TablesPage() {
                 const selected = selectedTable?.id === t.id
                 return (
                   <div
+                    data-testid="cashier-table-card"
+                    data-table-id={t.id}
+                    data-table-number={t.table_number}
                     key={t.id}
                     role="button"
                     tabIndex={0}

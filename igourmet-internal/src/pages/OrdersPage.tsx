@@ -651,6 +651,7 @@ export default function OrdersPage() {
             </div>
           </div>
           <Button
+            data-testid="waiter-view-cart-button"
             variant="secondary"
             size="sm"
             onClick={() => setMobileTab('cart')}

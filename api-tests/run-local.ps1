@@ -12,7 +12,7 @@ New-Item -ItemType Directory -Force -Path $temp | Out-Null
 $env:PAYOS_CLIENT_ID = ''
 $env:PAYOS_API_KEY = ''
 $env:PAYOS_CHECKSUM_KEY = ''
-$mail = Start-Process -FilePath 'node.exe' -ArgumentList @('fake-resend.js') `
+$mail = Start-Process -FilePath 'node.exe' -ArgumentList @('support/fake-resend.js') `
   -WorkingDirectory $PSScriptRoot `
   -RedirectStandardOutput (Join-Path $temp 'mail.out.log') `
   -RedirectStandardError (Join-Path $temp 'mail.err.log') -PassThru

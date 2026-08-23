@@ -196,6 +196,7 @@ export default function OrderPanel({
                     <div className="mt-2 flex gap-2 pt-1 border-t border-slate-100 dark:border-slate-800">
                       {isReady && (
                         <Button
+                          data-testid="waiter-serve-button"
                           variant="primary"
                           size="sm"
                           className="flex-1 h-8 text-xs font-bold"
@@ -258,6 +259,8 @@ export default function OrderPanel({
                       <StickyNote size={15} />
                     </button>
                     <button
+                      data-testid="waiter-cart-decrease"
+                      data-menu-item-id={line.id}
                       onClick={() => onDec(line.id)}
                       className="h-8 w-8 rounded-lg bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200 flex items-center justify-center font-bold active:scale-90"
                     >
@@ -289,6 +292,7 @@ export default function OrderPanel({
           </div>
         )}
         <Button
+          data-testid="waiter-submit-order-button"
           variant="primary"
           size="lg"
           className="w-full h-12 text-sm font-bold shadow-md shadow-emerald-600/20 active:scale-[0.98]"

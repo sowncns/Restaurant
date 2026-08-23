@@ -258,6 +258,18 @@ exports.findLatestPaidInvoice = (tableId, companyId, branchId) =>
     )
     .then((r) => r.rows[0]);
 
+exports.findInvoiceByIdScoped = (invoiceId, companyId, branchId) =>
+  pool
+    .query(
+      `SELECT i.invoice_id AS id, i.invoice_code, i.amount, i.amount AS final_amount, i.status, i.created_at, i.paid_at,
+              dt.table_number, dt.table_name
+       FROM invoices i
+       JOIN dining_tables dt ON i.table_id = dt.table_id
+       WHERE i.invoice_id = $1 AND i.company_id = $2 AND i.branch_id = $3`,
+      [invoiceId, companyId, branchId]
+    )
+    .then((r) => r.rows[0]);
+
 // Lay items tu snapshot JSON trong invoice (chinh xac hon query order_items sau khi ban reset).
 exports.findInvoiceItems = (invoiceId) =>
   pool

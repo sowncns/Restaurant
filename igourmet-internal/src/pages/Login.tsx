@@ -60,6 +60,7 @@ export default function Login() {
           Tên đăng nhập
         </label>
         <input
+          data-testid="internal-login-username"
           type="text"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
@@ -74,6 +75,7 @@ export default function Login() {
         </label>
         <div className="relative mb-2">
           <input
+            data-testid="internal-login-password"
             type={showPassword ? 'text' : 'password'}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -99,6 +101,7 @@ export default function Login() {
         {!capsLock && <div className="mb-4" />}
 
         <button
+          data-testid="internal-login-submit"
           type="submit"
           disabled={isSubmitting}
           className="w-full rounded-lg bg-slate-900 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-800 disabled:opacity-50"

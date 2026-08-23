@@ -33,6 +33,34 @@ def pytest_collection_modifyitems(config, items):
             item.add_marker(pytest.mark.skip(reason=reason))
 
 
+# pytest.ini defaults to `-m "not destructive"`, so requesting a single destructive test
+# by node id (without also passing -m destructive) makes pytest DESELECT it silently:
+# the terminal just prints "no tests collected (1 deselected)" with no explanation.
+# These two hooks turn that into an explicit, actionable message instead.
+_deselected_destructive_nodeids = []
+
+
+def pytest_deselected(items):
+    for item in items:
+        if "destructive" in item.keywords:
+            _deselected_destructive_nodeids.append(item.nodeid)
+
+
+def pytest_terminal_summary(terminalreporter, exitstatus, config):
+    if not _deselected_destructive_nodeids:
+        return
+    terminalreporter.write_sep("=", "destructive tests deselected by default marker filter")
+    terminalreporter.write_line(
+        'pytest.ini sets addopts = -m "not destructive", so these tests were removed from '
+        "the run before collection finished (not skipped, not failed - just not selected)."
+    )
+    terminalreporter.write_line("To actually run them:")
+    terminalreporter.write_line('  $env:API_DESTRUCTIVE = "1"')
+    terminalreporter.write_line("  pytest -m destructive " + " ".join(_deselected_destructive_nodeids))
+    for nodeid in _deselected_destructive_nodeids:
+        terminalreporter.write_line(f"    - {nodeid}")
+
+
 @pytest.fixture(scope="session")
 def api_config(pytestconfig):
     base = pytestconfig.getoption("--api-base-url") or os.getenv("API_BASE_URL") or os.getenv("E2E_API_URL") or "http://localhost:5000/api"

@@ -94,6 +94,7 @@ export default function Layout() {
               </div>
             </div>
             <button
+              data-testid="internal-logout-button"
               onClick={handleLogout}
               className="p-1.5 rounded-md text-slate-400 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40 dark:hover:text-rose-400 transition-colors cursor-pointer"
               title="Đăng xuất"
@@ -140,6 +141,7 @@ export default function Layout() {
 
             {/* Mobile Logout Button */}
             <button
+              data-testid="internal-logout-button"
               onClick={handleLogout}
               className="md:hidden p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
               title="Đăng xuất"

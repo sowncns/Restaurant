@@ -297,7 +297,7 @@ export default function CheckoutPanel({
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-16 w-16 mx-auto mb-2">
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <p className="text-lg font-medium text-center">Đã thanh toán hóa đơn</p>
+            <p data-testid="checkout-paid-message" className="text-lg font-medium text-center">Đã thanh toán hóa đơn</p>
           </div>
           <div className="flex gap-3 mt-4">
             <Button variant="secondary" onClick={onPaid}>
@@ -418,12 +418,13 @@ export default function CheckoutPanel({
           </h4>
           <div className="flex gap-2">
             <Input
+              data-testid="checkout-qr-token-input"
               placeholder="Dán token QR từ app khách"
               value={token}
               onChange={(e) => setToken(e.target.value)}
               className="flex-1"
             />
-            <Button onClick={doScan} disabled={busy}>
+            <Button data-testid="checkout-scan-qr-button" onClick={doScan} disabled={busy}>
               Quét
             </Button>
           </div>
@@ -447,6 +448,7 @@ export default function CheckoutPanel({
         {/* VAT */}
         <div className="rounded-lg border border-slate-200 bg-white">
           <button
+            data-testid="checkout-vat-toggle"
             onClick={() => setVatOpen((o) => !o)}
             className="flex w-full items-center justify-between px-3 py-2 text-sm font-semibold text-slate-700"
           >
@@ -460,10 +462,10 @@ export default function CheckoutPanel({
           {vatOpen && (
             <div className="border-t border-slate-100 px-3 pb-3 pt-2">
               <div className="flex flex-col gap-2">
-                <Input placeholder="Tên công ty" value={vatInfo.companyName} onChange={(e) => setVatInfo({ ...vatInfo, companyName: e.target.value })} />
-                <Input placeholder="Mã số thuế" value={vatInfo.taxCode} onChange={(e) => setVatInfo({ ...vatInfo, taxCode: e.target.value })} />
-                <Input placeholder="Địa chỉ" value={vatInfo.address} onChange={(e) => setVatInfo({ ...vatInfo, address: e.target.value })} />
-                <Input placeholder="Email nhận hóa đơn *" type="email" value={vatInfo.email} onChange={(e) => setVatInfo({ ...vatInfo, email: e.target.value })} />
+                <Input data-testid="checkout-vat-company" placeholder="Tên công ty" value={vatInfo.companyName} onChange={(e) => setVatInfo({ ...vatInfo, companyName: e.target.value })} />
+                <Input data-testid="checkout-vat-taxcode" placeholder="Mã số thuế" value={vatInfo.taxCode} onChange={(e) => setVatInfo({ ...vatInfo, taxCode: e.target.value })} />
+                <Input data-testid="checkout-vat-address" placeholder="Địa chỉ" value={vatInfo.address} onChange={(e) => setVatInfo({ ...vatInfo, address: e.target.value })} />
+                <Input data-testid="checkout-vat-email" placeholder="Email nhận hóa đơn *" type="email" value={vatInfo.email} onChange={(e) => setVatInfo({ ...vatInfo, email: e.target.value })} />
                 <div className="flex gap-2">
                   {vatSaved && (
                     <Button
@@ -482,6 +484,7 @@ export default function CheckoutPanel({
                     >Xóa</Button>
                   )}
                   <Button
+                    data-testid="checkout-vat-save"
                     className="flex-1"
                     disabled={busy || !vatInfo.email.trim()}
                     onClick={async () => {
@@ -562,7 +565,7 @@ export default function CheckoutPanel({
                 <p className="mb-3 text-slate-600">
                   Đã gửi yêu cầu thanh toán tới ứng dụng của khách. Khách mở app xác nhận bằng PIN, sau đó bấm kiểm tra để in hóa đơn.
                 </p>
-                <Button variant="secondary" className="w-full justify-center" disabled={busy} onClick={checkPaid}>
+                <Button data-testid="checkout-check-payment-button" variant="secondary" className="w-full justify-center" disabled={busy} onClick={checkPaid}>
                   <RefreshCw size={15} /> KT. Thanh toán
                 </Button>
               </>
@@ -589,13 +592,13 @@ export default function CheckoutPanel({
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-            <Button onClick={() => pay('CASH')} disabled={busy}>
+            <Button data-testid="checkout-cash-button" onClick={() => pay('CASH')} disabled={busy}>
               Tiền mặt
             </Button>
             <Button onClick={() => pay('TRANSFER')} disabled={busy}>
               Chuyển khoản
             </Button>
-            <Button onClick={() => pay('APP')} disabled={busy}>
+            <Button data-testid="checkout-app-button" onClick={() => pay('APP')} disabled={busy}>
               Qua App
             </Button>
             <Button onClick={() => pay('DEBT')} variant="danger" disabled={busy}>

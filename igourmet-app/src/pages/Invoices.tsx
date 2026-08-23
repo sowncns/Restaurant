@@ -148,7 +148,8 @@ export default function Invoices() {
               >
                 Từ chối
               </button>
-              <button 
+              <button
+                data-testid="invoice-pay-now-button"
                 onClick={() => setShowPinModal(true)}
                 className="flex-[2] py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200"
               >

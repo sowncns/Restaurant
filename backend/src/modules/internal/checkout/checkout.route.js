@@ -49,6 +49,7 @@ router.get("/table/:tableId/vat", staffUp, controller.getTableVat);
 
 // Quan ly hoa don
 router.get("/invoices", cashierUp, controller.listInvoices);
+router.get("/invoices/:invoiceId", cashierUp, controller.getInvoiceById);
 router.post("/invoices/:invoiceId/pay", cashierUp, controller.markInvoicePaid);
 
 module.exports = router;

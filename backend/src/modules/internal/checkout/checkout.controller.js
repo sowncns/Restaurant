@@ -104,6 +104,11 @@ exports.listInvoices = asyncHandler(async (req, res) => {
   res.json(result);
 });
 
+exports.getInvoiceById = asyncHandler(async (req, res) => {
+  const result = await service.getInvoiceById(req.user, req.params.invoiceId);
+  res.json(result);
+});
+
 exports.markInvoicePaid = asyncHandler(async (req, res) => {
   const result = await service.markInvoicePaid(req.user, req.params.invoiceId);
   res.json(result);

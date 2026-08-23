@@ -15,6 +15,7 @@ import {
   Trash2,
   ChevronDown,
   CalendarCheck,
+  Phone,
 } from 'lucide-react'
 import { tablesApi, type DiningTable, type Section, type TableStatus } from '../api/tables'
 import { reservationsApi, type ReservationAlert, type Reservation } from '../api/reservations'
@@ -67,25 +68,25 @@ const statusMeta: Record<TableStatus, Meta> = {
   AVAILABLE: {
     label: 'Trống',
     chip: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
-    card: 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-emerald-500',
+    card: 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-emerald-500 active:scale-[0.98]',
     accent: 'text-slate-800 dark:text-slate-200',
   },
   SERVING: {
-    label: 'Đang phục vụ',
+    label: 'Đang dùng',
     chip: 'bg-emerald-600 text-white',
-    card: 'bg-emerald-50/70 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-800 hover:border-emerald-500',
+    card: 'bg-emerald-50/70 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-800 hover:border-emerald-500 active:scale-[0.98]',
     accent: 'text-emerald-700 dark:text-emerald-400',
   },
   RESERVED: {
     label: 'Giữ chỗ',
     chip: 'bg-sky-600 text-white',
-    card: 'bg-sky-50/70 dark:bg-sky-950/40 border-sky-300 dark:border-sky-800 hover:border-sky-500',
+    card: 'bg-sky-50/70 dark:bg-sky-950/40 border-sky-300 dark:border-sky-800 hover:border-sky-500 active:scale-[0.98]',
     accent: 'text-sky-700 dark:text-sky-400',
   },
   WAIT_PAYMENT: {
     label: 'Chờ thanh toán',
     chip: 'bg-amber-600 text-white',
-    card: 'bg-amber-50/70 dark:bg-amber-950/40 border-amber-300 dark:border-amber-800 hover:border-amber-500',
+    card: 'bg-amber-50/70 dark:bg-amber-950/40 border-amber-300 dark:border-amber-800 hover:border-amber-500 active:scale-[0.98]',
     accent: 'text-amber-700 dark:text-amber-400',
   },
   DISABLE: {
@@ -99,7 +100,7 @@ const statusMeta: Record<TableStatus, Meta> = {
 const CONFLICT_META: Meta = {
   label: 'Sắp tới giờ hẹn',
   chip: 'bg-rose-600 text-white animate-pulse',
-  card: 'bg-rose-50/80 dark:bg-rose-950/40 border-rose-400 ring-2 ring-rose-300 dark:ring-rose-900',
+  card: 'bg-rose-50/80 dark:bg-rose-950/40 border-rose-400 ring-2 ring-rose-300 dark:ring-rose-900 active:scale-[0.98]',
   accent: 'text-rose-700 dark:text-rose-400',
 }
 
@@ -237,26 +238,28 @@ export default function FloorMapPage() {
   const countHeld = useMemo(() => reservations.filter((r) => r.status === 'CONFIRMED').length, [reservations])
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
+    <div className="mx-auto max-w-6xl space-y-4 md:space-y-6">
       {/* Header & Controls */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-xl md:text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100 flex items-center gap-2">
-            <CalendarCheck size={22} className="text-emerald-600" /> Sơ Đồ Bàn Lễ Tân
+            <CalendarCheck size={22} className="text-emerald-600 shrink-0" /> Sơ Đồ Bàn Lễ Tân
           </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400">Chạm vào bàn để mở bàn, giữ chỗ hoặc nhận khách đến</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            Chạm vào bàn để mở bàn, giữ chỗ hoặc nhận khách đến
+          </p>
         </div>
-        <Button variant="outline" size="sm" onClick={() => void load()} loading={loading} leftIcon={<RefreshCw size={14} />}>
+        <Button variant="outline" size="sm" onClick={() => void load()} loading={loading} leftIcon={<RefreshCw size={14} />} className="shrink-0">
           Làm mới
         </Button>
       </div>
 
       {/* Thống Kê Nhanh (Stat Cards) */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 md:gap-3">
         <StatTile label="Bàn trống" value={countTrong} tone="bg-emerald-500 text-white" />
         <StatTile label="Đang phục vụ" value={countServing} tone="bg-emerald-600 text-white" />
         <StatTile label="Đã giữ chỗ" value={countHeld} tone="bg-sky-600 text-white" />
-        <StatTile label="App chờ xác nhận" value={pending.length} tone="bg-amber-500 text-white" />
+        <StatTile label="App chờ duyệt" value={pending.length} tone="bg-amber-500 text-white" />
       </div>
 
       {/* Thông báo đặt bàn từ App */}
@@ -265,9 +268,9 @@ export default function FloorMapPage() {
           onClick={() => setPendingExpanded(!pendingExpanded)}
           className="flex w-full items-center gap-2 bg-emerald-600 dark:bg-emerald-700 px-4 py-3 text-white transition-colors cursor-pointer select-none"
         >
-          <BellRing size={18} />
-          <span className="text-sm font-bold">Đặt Bàn Từ App Chờ Duyệt</span>
-          <span className="ml-auto flex items-center gap-2">
+          <BellRing size={18} className="shrink-0" />
+          <span className="text-xs sm:text-sm font-bold truncate">Đặt Bàn Từ App Chờ Duyệt</span>
+          <span className="ml-auto flex items-center gap-2 shrink-0">
             <span className="rounded-full bg-white/20 px-2.5 py-0.5 text-xs font-extrabold">
               {pending.length}
             </span>
@@ -278,7 +281,7 @@ export default function FloorMapPage() {
           </span>
         </button>
         {pendingExpanded && (
-          <div className="border-t border-slate-100 dark:border-slate-800 p-4">
+          <div className="border-t border-slate-100 dark:border-slate-800 p-3 sm:p-4">
             {pending.length === 0 ? (
               <p className="py-2 text-center text-xs font-medium text-slate-400">
                 Chưa có đơn đặt bàn mới từ App · Tự động cập nhật mỗi phút
@@ -301,7 +304,7 @@ export default function FloorMapPage() {
         )}
       </section>
 
-      {/* Tim Kiem Phieu Dat */}
+      {/* Tìm Kiếm Phiếu Đặt */}
       <div className="relative w-full max-w-md">
         <Input
           placeholder="Tìm bàn đã đặt: tên khách, SĐT, số bàn..."
@@ -318,7 +321,7 @@ export default function FloorMapPage() {
                 {bookedResults.map((r) => (
                   <li key={r.id} className="flex items-center justify-between px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-800/50">
                     <div className="flex items-center gap-2">
-                      <CalendarClock size={15} className="text-slate-400" />
+                      <CalendarClock size={15} className="text-slate-400 shrink-0" />
                       <div>
                         <span className="font-bold text-slate-900 dark:text-slate-100">
                           {r.table_number || 'Chưa gán'}
@@ -332,7 +335,7 @@ export default function FloorMapPage() {
                       <button
                         title="Hủy phiếu đặt"
                         onClick={() => void cancelReservation(r.id, r.customer_name)}
-                        className="p-1 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-md"
+                        className="p-1 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-md shrink-0"
                       >
                         <Trash2 size={15} />
                       </button>
@@ -362,26 +365,26 @@ export default function FloorMapPage() {
 
       <ErrorText>{err}</ErrorText>
 
-      {/* Horizontal Tabs - Section Selector */}
+      {/* Horizontal Tabs - Section Selector (Swipeable & Sticky) */}
       {(sections.length > 0 || noSection.length > 0) && (
-        <div className="sticky top-0 z-20 -mx-4 px-4 py-2.5 bg-slate-50/90 dark:bg-slate-950/90 backdrop-blur-md flex gap-2 overflow-x-auto no-scrollbar border-b border-slate-200/60 dark:border-slate-800">
+        <div className="sticky top-0 z-20 -mx-4 px-4 py-2.5 bg-slate-50/95 dark:bg-slate-950/95 backdrop-blur-md flex gap-2 overflow-x-auto no-scrollbar border-b border-slate-200/60 dark:border-slate-800">
           <button
             onClick={() => setActiveSectionId('all')}
             className={cn(
-              'shrink-0 h-9 px-4 rounded-full text-xs font-semibold transition-all select-none cursor-pointer',
+              'shrink-0 h-8 md:h-9 px-3.5 md:px-4 rounded-full text-xs font-semibold transition-all select-none cursor-pointer',
               activeSectionId === 'all'
                 ? 'bg-emerald-600 text-white shadow-xs'
                 : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-800 hover:bg-slate-100',
             )}
           >
-            Tất cả khu vực ({tables.length})
+            Tất cả ({tables.length})
           </button>
           {sections.map((sec) => (
             <button
               key={sec.id}
               onClick={() => setActiveSectionId(sec.id)}
               className={cn(
-                'shrink-0 h-9 px-4 rounded-full text-xs font-semibold transition-all select-none cursor-pointer',
+                'shrink-0 h-8 md:h-9 px-3.5 md:px-4 rounded-full text-xs font-semibold transition-all select-none cursor-pointer',
                 activeSectionId === sec.id
                   ? 'bg-emerald-600 text-white shadow-xs'
                   : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-800 hover:bg-slate-100',
@@ -394,20 +397,20 @@ export default function FloorMapPage() {
             <button
               onClick={() => setActiveSectionId('none')}
               className={cn(
-                'shrink-0 h-9 px-4 rounded-full text-xs font-semibold transition-all select-none cursor-pointer',
+                'shrink-0 h-8 md:h-9 px-3.5 md:px-4 rounded-full text-xs font-semibold transition-all select-none cursor-pointer',
                 activeSectionId === 'none'
                   ? 'bg-emerald-600 text-white shadow-xs'
                   : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-800 hover:bg-slate-100',
               )}
             >
-              Chưa gán khu vực ({noSection.length})
+              Chưa gán ({noSection.length})
             </button>
           )}
         </div>
       )}
 
       {/* Grid Danh Sách Khu Vực & Bàn */}
-      <div className="space-y-8">
+      <div className="space-y-6 md:space-y-8">
         {sections
           .filter((sec) => activeSectionId === 'all' || activeSectionId === sec.id)
           .map((sec) => (
@@ -461,13 +464,13 @@ export default function FloorMapPage() {
 
 function StatTile({ label, value, tone }: { label: string; value: number; tone: string }) {
   return (
-    <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-xs flex items-center gap-3">
-      <div className={cn('h-10 w-10 rounded-xl flex items-center justify-center text-lg font-bold shadow-xs', tone)}>
+    <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-3 sm:p-4 shadow-xs flex items-center gap-2.5 sm:gap-3">
+      <div className={cn('h-9 w-9 sm:h-10 sm:w-10 rounded-xl flex items-center justify-center text-base sm:text-lg font-bold shadow-xs shrink-0', tone)}>
         {value}
       </div>
-      <div className="flex flex-col">
-        <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">{label}</span>
-        <span className="text-base font-bold text-slate-900 dark:text-slate-100">{value} bàn</span>
+      <div className="flex flex-col min-w-0">
+        <span className="text-[11px] sm:text-xs font-semibold text-slate-500 dark:text-slate-400 truncate">{label}</span>
+        <span className="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100">{value} bàn</span>
       </div>
     </div>
   )
@@ -487,14 +490,14 @@ function SectionBlock({
   onSelect: (t: DiningTable) => void
 }) {
   return (
-    <section className="space-y-3">
-      <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-2">
+    <section className="space-y-2.5 sm:space-y-3">
+      <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-1.5">
         <span className="h-4 w-1 rounded bg-emerald-600" />
-        <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">{name}</h2>
+        <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100">{name}</h2>
         <span className="text-xs font-semibold text-slate-400">({tables.length} bàn)</span>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2.5">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-3">
         {tables.map((t) => (
           <TableCard
             key={t.id}
@@ -536,27 +539,27 @@ function TableCard({
       type="button"
       onClick={() => onSelect(t)}
       className={cn(
-        'relative flex flex-col justify-between min-h-[100px] p-3 rounded-xl border transition-all duration-150 text-left cursor-pointer select-none shadow-xs',
+        'relative flex flex-col justify-between min-h-[96px] sm:min-h-[105px] p-2.5 sm:p-3 rounded-2xl border transition-all duration-150 text-left cursor-pointer select-none shadow-xs',
         meta.card,
       )}
     >
       <div className="flex items-start justify-between gap-1">
-        <span className={cn('px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider', meta.chip)}>
+        <span className={cn('px-1.5 sm:px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-bold uppercase tracking-wider', meta.chip)}>
           {meta.label}
         </span>
-        {(upcoming || conflict) && <BellRing size={13} className="text-rose-500 animate-pulse" />}
+        {(upcoming || conflict) && <BellRing size={13} className="text-rose-500 animate-pulse shrink-0" />}
       </div>
 
-      <div className="my-2 flex items-center gap-1.5">
+      <div className="my-1.5 flex items-center gap-1.5">
         <Armchair size={16} className={meta.accent} />
-        <span className={cn('text-xl font-bold tracking-tight', meta.accent)}>{t.table_number}</span>
-        <span className="text-xs text-slate-400">({t.capacity} chỗ)</span>
+        <span className={cn('text-lg sm:text-xl font-bold tracking-tight', meta.accent)}>{t.table_number}</span>
+        <span className="text-[11px] sm:text-xs text-slate-400">({t.capacity}c)</span>
       </div>
 
-      <div className="text-[11px] font-medium leading-tight">
+      <div className="text-[10px] sm:text-[11px] font-medium leading-tight truncate">
         {conflict ? (
           <span className="text-rose-600 font-bold">
-            Hẹn {conflict.reservation_time?.slice(0, 5)} · {conflict.customer_name}
+            {conflict.reservation_time?.slice(0, 5)} · {conflict.customer_name}
           </span>
         ) : t.status === 'SERVING' && t.active_order_amount > 0 ? (
           <span className="text-emerald-600 font-bold">
@@ -565,8 +568,8 @@ function TableCard({
         ) : isPaid ? (
           <span className="text-emerald-600 font-semibold">Khách đang ngồi</span>
         ) : upcoming ? (
-          <span className="flex items-center gap-1 text-sky-600 font-semibold">
-            <Clock size={10} />
+          <span className="flex items-center gap-1 text-sky-600 font-semibold truncate">
+            <Clock size={10} className="shrink-0" />
             {upcoming.reservation_time?.slice(0, 5)} · {upcoming.customer_name}
           </span>
         ) : (
@@ -597,14 +600,14 @@ function ConflictRow({
   const [tableId, setTableId] = useState<string>('')
 
   return (
-    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3.5 rounded-xl border border-rose-300 bg-rose-50 dark:bg-rose-950/40 text-xs text-rose-800 dark:text-rose-200">
+    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 p-3 rounded-xl border border-rose-300 bg-rose-50 dark:bg-rose-950/40 text-xs text-rose-800 dark:text-rose-200">
       <div className="flex items-center gap-2 font-medium">
         <AlertTriangle size={16} className="text-rose-600 shrink-0" />
         <span>{a.message}</span>
       </div>
       <div className="flex items-center gap-2 w-full sm:w-auto">
-        <Select value={tableId} onChange={(e) => setTableId(e.target.value)} className="h-8 text-xs bg-white dark:bg-slate-900">
-          <option value="">-- Chọn bàn trống thay thế --</option>
+        <Select value={tableId} onChange={(e) => setTableId(e.target.value)} className="h-8 text-xs bg-white dark:bg-slate-900 flex-1 sm:flex-none">
+          <option value="">-- Chọn bàn thay thế --</option>
           {free.map((t) => (
             <option key={t.id} value={t.id}>
               {t.table_number} ({t.capacity} chỗ)
@@ -612,7 +615,7 @@ function ConflictRow({
           ))}
         </Select>
         <Button variant="danger" size="sm" disabled={!tableId} onClick={() => tableId && onSwitch(Number(tableId))} className="h-8 text-xs shrink-0">
-          <ArrowLeftRight size={13} /> Chuyển bàn
+          <ArrowLeftRight size={13} /> Đổi bàn
         </Button>
       </div>
     </div>
@@ -640,8 +643,8 @@ function PendingRow({
   const [tableId, setTableId] = useState<string>('')
 
   return (
-    <div className="p-3 rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50/40 dark:bg-emerald-950/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
-      <div className="flex items-center gap-3">
+    <div className="p-3 rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50/40 dark:bg-emerald-950/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 text-xs">
+      <div className="flex items-center gap-2.5">
         <div className="h-8 w-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center font-bold shrink-0">
           <Users size={15} />
         </div>
@@ -649,25 +652,29 @@ function PendingRow({
           <div className="font-bold text-slate-900 dark:text-slate-100 text-sm">
             {r.customer_name} <span className="text-emerald-600 font-semibold">({r.guest_count} khách)</span>
           </div>
-          <div className="text-slate-500 font-medium mt-0.5">
-            {r.customer_phone} · {r.reservation_time?.slice(0, 5)} {r.reservation_date?.slice(0, 10)}
+          <div className="text-slate-500 font-medium mt-0.5 flex items-center gap-2">
+            <a href={`tel:${r.customer_phone}`} className="text-emerald-600 hover:underline flex items-center gap-1 font-semibold">
+              <Phone size={11} /> {r.customer_phone}
+            </a>
+            <span>·</span>
+            <span>{r.reservation_time?.slice(0, 5)} ({r.reservation_date?.slice(0, 10)})</span>
           </div>
         </div>
       </div>
 
-      <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-        <Select value={tableId} onChange={(e) => setTableId(e.target.value)} className="h-8 text-xs bg-white dark:bg-slate-900">
+      <div className="flex items-center gap-2 w-full sm:w-auto justify-end pt-1 sm:pt-0 border-t sm:border-t-0 border-emerald-100 dark:border-emerald-900/50">
+        <Select value={tableId} onChange={(e) => setTableId(e.target.value)} className="h-8 text-xs bg-white dark:bg-slate-900 flex-1 sm:flex-none">
           <option value="">-- Xếp bàn --</option>
           {options.map((t) => (
             <option key={t.id} value={t.id}>
-              {t.table_number} ({t.capacity} chỗ)
+              {t.table_name || `Bàn ${t.table_number}`} ({t.capacity}c)
             </option>
           ))}
         </Select>
-        <Button size="sm" disabled={!tableId} onClick={() => tableId && onConfirm(Number(tableId))} className="h-8 text-xs font-bold" leftIcon={<Check size={14} />}>
+        <Button size="sm" disabled={!tableId} onClick={() => tableId && onConfirm(Number(tableId))} className="h-8 text-xs font-bold shrink-0" leftIcon={<Check size={14} />}>
           Duyệt
         </Button>
-        <button onClick={onReject} className="p-1.5 text-rose-500 hover:bg-rose-100 rounded-lg">
+        <button onClick={onReject} className="h-8 w-8 flex items-center justify-center text-rose-500 hover:bg-rose-100 rounded-lg shrink-0" title="Từ chối">
           <Trash2 size={15} />
         </button>
       </div>
@@ -789,7 +796,7 @@ function TableActionModal({
 
   return (
     <Modal open title={`Thao Tác Bàn ${table.table_name || table.table_number}`} onClose={onClose}>
-      <div className="flex flex-col gap-4 text-xs">
+      <div className="flex flex-col gap-3.5 text-xs">
         <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800">
           <span className="font-bold text-slate-700 dark:text-slate-200">
             Sức chứa: {table.capacity} chỗ · {table.section_name || 'Khu vực chung'}
@@ -802,66 +809,68 @@ function TableActionModal({
         {tableReservations.length > 0 && (
           <div className="space-y-2 border border-sky-200 dark:border-sky-800 p-3 rounded-xl bg-sky-50/50 dark:bg-sky-950/30">
             <div className="font-bold text-sky-800 dark:text-sky-300">Lịch Đặt Bàn Đang Có ({tableReservations.length})</div>
-            <div className="space-y-1.5">
-              {tableReservations.map((r) => {
-                return (
-                  <div key={r.id} className="p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 space-y-2">
-                    <div className="flex items-center justify-between gap-2">
+            <div className="space-y-1.5 max-h-48 overflow-y-auto">
+              {tableReservations.map((r) => (
+                <div key={r.id} className="p-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 space-y-1.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <div>
                       <span className="font-bold text-slate-900 dark:text-slate-100">
-                        {r.reservation_time?.slice(0, 5)} · {r.customer_name} ({r.guest_count} khách)
+                        {r.reservation_time?.slice(0, 5)} · {r.customer_name}
                       </span>
-                      {r.status !== 'CHECKED_IN' && (
-                        <div className="flex items-center gap-1">
-                          <Button
-                            size="sm"
-                            onClick={() => onCheckinReservation(r.id)}
-                            disabled={table.status === 'SERVING'}
-                            className="h-7 text-[11px] font-bold"
-                          >
-                            Nhận khách
-                          </Button>
-                          <button
-                            onClick={() => onCancelReservation(r.id, r.customer_name)}
-                            className="p-1 text-rose-500 hover:bg-rose-50 rounded"
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                        </div>
-                      )}
+                      <span className="ml-1 text-slate-500 font-semibold">({r.guest_count} khách)</span>
                     </div>
+                    {r.status !== 'CHECKED_IN' && (
+                      <div className="flex items-center gap-1 shrink-0">
+                        <Button
+                          size="sm"
+                          onClick={() => onCheckinReservation(r.id)}
+                          disabled={table.status === 'SERVING'}
+                          className="h-7 px-2.5 text-[11px] font-bold"
+                        >
+                          Nhận khách
+                        </Button>
+                        <button
+                          onClick={() => onCancelReservation(r.id, r.customer_name)}
+                          className="p-1 text-rose-500 hover:bg-rose-50 rounded shrink-0"
+                          title="Hủy phiếu đặt"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    )}
                   </div>
-                )
-              })}
+                </div>
+              ))}
             </div>
           </div>
         )}
 
         {mode === 'menu' ? (
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-2.5 sm:gap-3 pt-1">
             <button
               disabled={busy || table.status === 'SERVING'}
               onClick={() => setMode('open')}
-              className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl border-2 border-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 font-bold hover:bg-emerald-100 cursor-pointer select-none disabled:opacity-40 disabled:cursor-not-allowed"
+              className="flex flex-col items-center justify-center gap-2 p-3.5 sm:p-4 rounded-2xl border-2 border-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 font-bold hover:bg-emerald-100 active:scale-95 cursor-pointer select-none disabled:opacity-40 disabled:cursor-not-allowed transition-all"
             >
               <DoorOpen size={24} />
-              <span>Mở Bàn Vãng Lai</span>
+              <span className="text-xs sm:text-sm">Mở Bàn Vãng Lai</span>
             </button>
 
             <button
               onClick={() => setMode('hold')}
-              className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl border-2 border-sky-300 bg-sky-50 dark:bg-sky-950/40 text-sky-800 dark:text-sky-300 font-bold hover:bg-sky-100 cursor-pointer select-none"
+              className="flex flex-col items-center justify-center gap-2 p-3.5 sm:p-4 rounded-2xl border-2 border-sky-300 bg-sky-50 dark:bg-sky-950/40 text-sky-800 dark:text-sky-300 font-bold hover:bg-sky-100 active:scale-95 cursor-pointer select-none transition-all"
             >
               <BookmarkPlus size={24} />
-              <span>Giữ Bàn / Đặt Trước</span>
+              <span className="text-xs sm:text-sm">Giữ Bàn / Đặt Trước</span>
             </button>
 
             {emptyOrderId && (
               <button
                 onClick={() => void cancelEmptyOrder()}
                 disabled={busy}
-                className="col-span-2 flex items-center justify-center gap-2 rounded-xl border-2 border-rose-200 bg-rose-50 p-3 font-bold text-rose-700 hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-rose-900 dark:bg-rose-950/30 dark:text-rose-300"
+                className="col-span-2 flex items-center justify-center gap-2 rounded-xl border-2 border-rose-200 bg-rose-50 p-3 font-bold text-rose-700 hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-rose-900 dark:bg-rose-950/30 dark:text-rose-300 transition-all cursor-pointer"
               >
-                <Trash2 size={18} />
+                <Trash2 size={16} />
                 <span>Hủy Mở Bàn</span>
               </button>
             )}
@@ -870,31 +879,30 @@ function TableActionModal({
               <button
                 onClick={() => void releaseTable()}
                 disabled={busy}
-                className="col-span-2 flex items-center justify-center gap-2 rounded-xl border-2 border-teal-200 bg-teal-50 p-3 font-bold text-teal-700 hover:bg-teal-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-teal-900 dark:bg-teal-950/30 dark:text-teal-300"
+                className="col-span-2 flex items-center justify-center gap-2 rounded-xl border-2 border-teal-200 bg-teal-50 p-3 font-bold text-teal-700 hover:bg-teal-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-teal-900 dark:bg-teal-950/30 dark:text-teal-300 transition-all cursor-pointer"
               >
-                <DoorOpen size={18} />
+                <DoorOpen size={16} />
                 <span>Khách Đã Rời Bàn</span>
               </button>
             )}
-
           </div>
         ) : mode === 'hold' ? (
           <div className="space-y-3">
             <h4 className="font-bold text-slate-800 dark:text-slate-200">Giữ chỗ đặt trước</h4>
-            <Input label="Tên khách hàng" value={name} onChange={(e) => setName(e.target.value)} />
-            <Input label="Số điện thoại" value={phone} onChange={(e) => setPhone(e.target.value)} />
+            <Input label="Tên khách hàng *" value={name} onChange={(e) => setName(e.target.value)} />
+            <Input label="Số điện thoại *" value={phone} onChange={(e) => setPhone(e.target.value)} />
             <Input label="Số lượng khách" type="number" value={guests} onChange={(e) => setGuests(e.target.value)} />
-            <div className="grid grid-cols-2 gap-3">
-              <Input label="Ngày" value={date} onChange={(e) => setDate(e.target.value)} />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Input label="Ngày (YYYY-MM-DD)" value={date} onChange={(e) => setDate(e.target.value)} />
               <Input label="Giờ (HH:mm)" value={time} onChange={(e) => setTime(e.target.value)} placeholder="19:00" />
             </div>
             <Input label="Ghi chú" value={note} onChange={(e) => setNote(e.target.value)} />
             <ErrorText>{err}</ErrorText>
             <div className="flex justify-end gap-2 pt-2">
-              <Button variant="outline" onClick={() => setMode('menu')}>
+              <Button variant="outline" size="sm" onClick={() => setMode('menu')}>
                 Quay lại
               </Button>
-              <Button onClick={hold} loading={busy}>
+              <Button onClick={hold} loading={busy} size="sm">
                 Lưu giữ bàn
               </Button>
             </div>
@@ -905,10 +913,10 @@ function TableActionModal({
             <Input label="Số lượng khách" type="number" value={walkinGuests} onChange={(e) => setWalkinGuests(e.target.value)} autoFocus />
             <ErrorText>{err}</ErrorText>
             <div className="flex justify-end gap-2 pt-2">
-              <Button variant="outline" onClick={() => setMode('menu')}>
+              <Button variant="outline" size="sm" onClick={() => setMode('menu')}>
                 Quay lại
               </Button>
-              <Button onClick={openTable} loading={busy}>
+              <Button onClick={openTable} loading={busy} size="sm">
                 Xác nhận mở bàn
               </Button>
             </div>
