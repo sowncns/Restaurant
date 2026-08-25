@@ -18,6 +18,10 @@ const env = cleanEnv(process.env, {
   // Ep bat rate limit ngay ca o development (de test truoc khi len prod).
   // Production luon bat bat ke bien nay.
   RATE_LIMIT_ENABLED: bool({ default: false }),
+  // Danh sach IP duoc bo qua rate limit (vd may chay Selenium demo), cach nhau boi dau phay.
+  RATE_LIMIT_WHITELIST_IPS: str({ default: "" }),
+  // So request dang nhap toi da / 15 phut cho 1 IP. Tang tam thoi khi demo neu IP khong on dinh.
+  RATE_LIMIT_AUTH_MAX: num({ default: 10 }),
 
   CORS_ORIGINS: str({ default: "http://localhost:5173" }),
   FRONTEND_URL: str({ default: "http://localhost:5173" }),

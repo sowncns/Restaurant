@@ -4,7 +4,7 @@ import os
 import time
 from datetime import date, timedelta
 
-from selenium.common.exceptions import ElementNotInteractableException
+from selenium.common.exceptions import ElementNotInteractableException, StaleElementReferenceException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import Select
@@ -231,12 +231,17 @@ def book_order_and_serve(driver, wait, ui_config):
     wait.until(EC.presence_of_element_located(by_testid("kitchen-order-item")))
     slow()
     readied = 0
-    max_attempts = len(driver.find_elements(*by_testid("kitchen-order-item"))) + 2
+    max_attempts = len(driver.find_elements(*by_testid("kitchen-order-item"))) + 4
     for _ in range(max_attempts):
         buttons = driver.find_elements(*by_testid("kitchen-ready-button"))
         if not buttons:
             break
-        safe_click(driver, buttons[0])
+        try:
+            safe_click(driver, buttons[0])
+        except StaleElementReferenceException:
+            # Realtime (Supabase) refreshed the queue giua luc tim va bam - thu lai voi
+            # danh sach moi thay vi crash ca test.
+            continue
         readied += 1
         slow()
     assert readied > 0, "khong bao duoc mon nao la da nau xong"
@@ -259,12 +264,15 @@ def book_order_and_serve(driver, wait, ui_config):
         safe_click(driver, cart_tab_buttons[0])
         slow()
     served = 0
-    max_serve_attempts = readied + 2
+    max_serve_attempts = readied + 4
     for _ in range(max_serve_attempts):
         buttons = driver.find_elements(*by_testid("waiter-serve-button"))
         if not buttons:
             break
-        safe_click(driver, buttons[0])
+        try:
+            safe_click(driver, buttons[0])
+        except StaleElementReferenceException:
+            continue
         served += 1
         slow()
     assert served > 0, "khong xac nhan phuc vu duoc mon nao"
