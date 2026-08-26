@@ -23,7 +23,7 @@ export const ROLE_GROUPS = {
   CASHIER: ['CASHIER'] as Role[], // Thu ngan
   WAITER: ['WAITER'] as Role[], // Don hang (phuc vu)
   RECEPTIONIST: ['RECEPTIONIST'] as Role[], // So do ban + Dat ban (le tan)
-  RESERVATIONS: [...MANAGERS, 'RECEPTIONIST'] as Role[],
+  RESERVATIONS: ['RECEPTIONIST'] as Role[],
   KITCHEN: ['KITCHEN'] as Role[], // Bep: hang doi mon + QR
   // Yeu cau huy mon: bep duyet.
   CANCEL_REQUESTS: ['KITCHEN'] as Role[],
