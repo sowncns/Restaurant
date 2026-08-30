@@ -22,6 +22,8 @@ const env = cleanEnv(process.env, {
   RATE_LIMIT_WHITELIST_IPS: str({ default: "" }),
   // So request dang nhap toi da / 15 phut cho 1 IP. Tang tam thoi khi demo neu IP khong on dinh.
   RATE_LIMIT_AUTH_MAX: num({ default: 10 }),
+  // So lan dat ban khach vang lai toi da / 15 phut cho 1 IP (chan spam form dat ban tu landing page).
+  RATE_LIMIT_RESERVATION_MAX: num({ default: 5 }),
 
   CORS_ORIGINS: str({ default: "http://localhost:5173" }),
   FRONTEND_URL: str({ default: "http://localhost:5173" }),

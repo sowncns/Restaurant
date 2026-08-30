@@ -3,12 +3,19 @@
 const express = require("express");
 const controller = require("./public.controller");
 const { validate } = require("../../shared/middlewares/validate.middleware");
+const { reservationLimiter } = require("../../shared/middlewares/rateLimit.middleware");
 const { createGuestReservationSchema } = require("../customer/reservation/reservation.schema");
 
 const router = express.Router();
 
 // Dat ban khach vang lai (khong yeu cau dang nhap, khong dat mon truoc)
-router.post("/reservations", validate(createGuestReservationSchema), controller.createReservation);
+// -> gioi han rieng theo IP de chan spam tu form dat ban tren landing page
+router.post(
+  "/reservations",
+  reservationLimiter,
+  validate(createGuestReservationSchema),
+  controller.createReservation
+);
 
 // Cong ty
 router.get("/companies", controller.listCompanies);

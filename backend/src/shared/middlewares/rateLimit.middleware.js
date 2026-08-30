@@ -10,5 +10,12 @@ const skip = (req) => !(env.isProduction || env.RATE_LIMIT_ENABLED) || whitelist
 
 const generalLimiter = rateLimit({ windowMs: 60_000, max: 120, skip });
 const authLimiter = rateLimit({ windowMs: 15 * 60_000, max: env.RATE_LIMIT_AUTH_MAX, skip });
+// Dat ban khach vang lai tu landing page (khong dang nhap) -> gioi han theo IP de chan spam form.
+const reservationLimiter = rateLimit({
+  windowMs: 15 * 60_000,
+  max: env.RATE_LIMIT_RESERVATION_MAX,
+  skip,
+  message: { message: "Bạn đã đặt bàn quá nhiều lần. Vui lòng thử lại sau ít phút." },
+});
 
-module.exports = { generalLimiter, authLimiter };
+module.exports = { generalLimiter, authLimiter, reservationLimiter };
