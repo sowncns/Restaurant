@@ -4,7 +4,8 @@ WORKDIR /app
 
 COPY package*.json ./
 
-RUN npm ci --omit=dev
+RUN npm ci --omit=dev --ignore-scripts && \
+    npm cache clean --force
 
 
 FROM node:22-alpine AS runner
@@ -13,14 +14,11 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 
-RUN addgroup -S nodejs && adduser -S nodejs -G nodejs
-
 COPY --from=deps /app/node_modules ./node_modules
-COPY . .
+COPY package*.json ./
+COPY src ./src
 
-RUN chown -R nodejs:nodejs /app
-
-USER nodejs
+USER node
 
 EXPOSE 5000
 
